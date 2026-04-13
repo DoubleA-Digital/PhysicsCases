@@ -463,6 +463,59 @@ input { font-family: var(--mono); }
 }
 #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+/* ════════════════════════════════════
+   LEADERBOARD PAGE
+════════════════════════════════════ */
+.lb-date-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(79,142,247,.12); border: 1px solid rgba(79,142,247,.25);
+  color: var(--accent); padding: 4px 14px; border-radius: 20px;
+  font-size: .78rem; font-weight: 600; margin-bottom: 28px;
+}
+.lb-podium {
+  display: flex; align-items: flex-end; justify-content: center;
+  gap: 16px; margin-bottom: 40px;
+}
+.lb-podium-slot {
+  display: flex; flex-direction: column; align-items: center;
+  flex: 1; max-width: 180px;
+}
+.lb-podium-avatar {
+  font-size: 2rem; margin-bottom: 6px;
+}
+.lb-podium-name {
+  font-weight: 700; font-size: .88rem; text-align: center;
+  margin-bottom: 2px; max-width: 120px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.lb-podium-time {
+  font-family: var(--mono); font-size: .82rem; color: var(--muted);
+  margin-bottom: 8px;
+}
+.lb-podium-block {
+  width: 100%; border-radius: 8px 8px 0 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; font-weight: 800;
+}
+.lb-podium-slot:nth-child(1) .lb-podium-block { height: 72px; background: rgba(210,153,34,.18); border: 1px solid rgba(210,153,34,.4); color: var(--yellow); }
+.lb-podium-slot:nth-child(2) .lb-podium-block { height: 100px; background: rgba(210,153,34,.25); border: 1px solid rgba(210,153,34,.5); color: var(--yellow); }
+.lb-podium-slot:nth-child(3) .lb-podium-block { height: 56px; background: rgba(139,92,246,.12); border: 1px solid rgba(139,92,246,.3); color: var(--purple); }
+.lb-podium-slot.lb-you .lb-podium-name { color: var(--accent); }
+.lb-empty {
+  text-align: center; padding: 64px 24px; color: var(--muted);
+  font-size: .95rem; line-height: 1.7;
+}
+.lb-empty-icon { font-size: 3rem; margin-bottom: 12px; }
+.lb-section-head {
+  font-size: .72rem; font-weight: 600; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 14px;
+}
+.lb-you-row td { background: rgba(79,142,247,.07) !important; }
+.lb-rank-num {
+  font-family: var(--mono); font-size: .82rem; color: var(--muted);
+  min-width: 32px; display: inline-block; text-align: right;
+}
+
 /* ── RESPONSIVE ── */
 @media (max-width: 640px) {
   #nav { padding: 0 16px; }
@@ -528,6 +581,7 @@ input { font-family: var(--mono); }
     <button class="nav-link" id="nl-case" onclick="showPage('case')">Case</button>
     <button class="nav-link" id="nl-practice" onclick="showPage('practice')">Practice</button>
     <button class="nav-link" id="nl-archive" onclick="showPage('archive')">Archive</button>
+    <button class="nav-link" id="nl-leaderboard" onclick="showPage('leaderboard')">Leaderboard</button>
     <button class="nav-profile-btn" id="nl-profile" onclick="showPage('profile')" title="Profile">P</button>
   </div>
 </nav>
@@ -939,6 +993,52 @@ input { font-family: var(--mono); }
   </div>
 </div>
 
+<!-- ════ LEADERBOARD PAGE ════ -->
+<div class="page" id="page-leaderboard">
+  <div class="container section-sm">
+    <p class="label">Daily Rankings</p>
+    <h1 class="page-title" style="margin-bottom:8px">Leaderboard</h1>
+    <p class="page-sub" style="margin-bottom:24px">Fastest solvers for each day's case. Rankings reset each day at midnight.</p>
+
+    <!-- Today's board -->
+    <div class="lb-date-badge" id="lb-today-badge">📅 Today</div>
+    <p class="lb-section-head" id="lb-today-case-label">Today's Case</p>
+
+    <!-- Podium (top 3 today) -->
+    <div id="lb-podium-wrap"></div>
+
+    <!-- Full today table -->
+    <div class="card" style="padding:0;overflow:hidden;margin-bottom:40px" id="lb-today-card">
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th style="width:48px">#</th>
+            <th>Solver</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody id="lb-today-body"></tbody>
+      </table>
+    </div>
+
+    <!-- Previous days -->
+    <p class="lb-section-head">Previous Days</p>
+    <div class="card" style="padding:0;overflow:hidden;margin-bottom:40px">
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Case</th>
+            <th>Winner</th>
+            <th>Best Time</th>
+          </tr>
+        </thead>
+        <tbody id="lb-history-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div id="toast"></div>
 
@@ -1344,6 +1444,99 @@ function renderLeaderboard() {
   body.innerHTML = rows;
 }
 
+function renderLeaderboardPage() {
+  const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+  const todayCase = getCaseForDate(new Date());
+  const allEntries = getLeaderboard();
+  const cosmetics = COSMETICS;
+
+  // Format badge date nicely
+  const niceDate = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  const badge = document.getElementById('lb-today-badge');
+  if (badge) badge.textContent = `📅 ${niceDate}`;
+  const caseLabel = document.getElementById('lb-today-case-label');
+  if (caseLabel) caseLabel.textContent = `${todayCase.id}: ${todayCase.title}`;
+
+  // Today's entries — best time per user
+  const todayRaw = allEntries.filter(e => e.date === todayStr && e.caseId === todayCase.id);
+  const bestPerUser = {};
+  todayRaw.forEach(e => {
+    const key = e.email || e.username;
+    if (!bestPerUser[key] || e.timeSec < bestPerUser[key].timeSec) bestPerUser[key] = e;
+  });
+  const todayRanked = Object.values(bestPerUser).sort((a, b) => a.timeSec - b.timeSec);
+
+  // Render podium
+  const podiumWrap = document.getElementById('lb-podium-wrap');
+  if (podiumWrap) {
+    if (todayRanked.length === 0) {
+      podiumWrap.innerHTML = `<div class="lb-empty"><div class="lb-empty-icon">🏁</div><p>No one has solved today's case yet.<br>Be the first to set a time!</p></div>`;
+    } else {
+      const slots = [todayRanked[1], todayRanked[0], todayRanked[2]]; // 2nd, 1st, 3rd layout
+      const medals = ['🥈', '🥇', '🥉'];
+      const isMe = e => currentUser && e && (e.email === currentUser.email || e.username === currentUser.username);
+      podiumWrap.innerHTML = `<div class="lb-podium">${slots.map((e, i) => {
+        if (!e) return `<div class="lb-podium-slot"></div>`;
+        const accounts = getAccounts();
+        const acc = accounts.find(a => a.email === e.email);
+        const cosmeticId = acc ? acc.equippedCosmetic : 'monkey';
+        const icon = (COSMETICS.find(c => c.id === cosmeticId) || COSMETICS[0]).icon;
+        const me = isMe(e) ? ' lb-you' : '';
+        return `<div class="lb-podium-slot${me}">
+          <div class="lb-podium-avatar">${icon}</div>
+          <div class="lb-podium-name">${e.username}</div>
+          <div class="lb-podium-time">${formatTime(e.timeSec)}</div>
+          <div class="lb-podium-block">${medals[i]}</div>
+        </div>`;
+      }).join('')}</div>`;
+    }
+  }
+
+  // Render today's full table
+  const todayBody = document.getElementById('lb-today-body');
+  if (todayBody) {
+    if (todayRanked.length === 0) {
+      todayBody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:24px;color:var(--muted);font-style:italic">No entries yet today.</td></tr>';
+    } else {
+      todayBody.innerHTML = todayRanked.map((e, i) => {
+        const me = currentUser && (e.email === currentUser.email || e.username === currentUser.username);
+        const rowClass = me ? ' class="lb-you-row"' : '';
+        return `<tr${rowClass}>
+          <td><span class="lb-rank-num">${i + 1}</span></td>
+          <td>${e.username}${me ? ' <span style="color:var(--accent);font-size:.75rem">(you)</span>' : ''}</td>
+          <td class="td-mono">${formatTime(e.timeSec)}</td>
+        </tr>`;
+      }).join('');
+    }
+  }
+
+  // Render previous days — best per case per day, excluding today
+  const histBody = document.getElementById('lb-history-body');
+  if (histBody) {
+    const prev = {};
+    allEntries.forEach(e => {
+      if (e.date === todayStr) return;
+      const key = `${e.date}|${e.caseId}`;
+      if (!prev[key] || e.timeSec < prev[key].timeSec) prev[key] = e;
+    });
+    const prevRows = Object.values(prev).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 50);
+    if (prevRows.length === 0) {
+      histBody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--muted);font-style:italic">No previous day records yet.</td></tr>';
+    } else {
+      histBody.innerHTML = prevRows.map(e => {
+        const caseObj = CASE_BANK.find(c => c.id === e.caseId);
+        const niceD = new Date(e.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        return `<tr>
+          <td style="color:var(--muted)">${niceD}</td>
+          <td>${caseObj ? caseObj.title : e.caseId}</td>
+          <td>${e.username}</td>
+          <td class="td-mono">${formatTime(e.timeSec)}</td>
+        </tr>`;
+      }).join('');
+    }
+  }
+}
+
 function generateQuantQuestion(topic, difficulty) {
   const variant = randInt(0, 1);
   if (topic === 'kinematics') {
@@ -1654,6 +1847,7 @@ function showPage(name) {
   if (name === 'profile') updateProfilePage();
   if (name === 'practice') renderPracticeLists();
   if (name === 'archive') renderArchiveList();
+  if (name === 'leaderboard') renderLeaderboardPage();
   window.scrollTo(0, 0);
 }
 
@@ -1888,6 +2082,7 @@ function completeCase() {
   });
   saveLeaderboard(lb);
   renderLeaderboard();
+  renderLeaderboardPage();
   renderCosmeticsShop();
   renderArchiveList();
   showToast(`Case complete! +${earnedPoints} points`);
