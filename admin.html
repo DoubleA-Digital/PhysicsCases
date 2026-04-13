@@ -284,6 +284,8 @@ tbody tr:hover td { background: rgba(255,255,255,.02); }
   .kpi-grid { grid-template-columns: repeat(2, 1fr); }
 }
 </style>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
@@ -490,8 +492,19 @@ tbody tr:hover td { background: rgba(255,255,255,.02); }
 </div><!-- /#admin-app -->
 
 <script>
+/* ── FIREBASE ── */
+firebase.initializeApp({
+  apiKey: "AIzaSyDPRzJ07MdAfzJH5TlcnEQZmBcDdaK5CTo",
+  authDomain: "vectiq-a52db.firebaseapp.com",
+  projectId: "vectiq-a52db",
+  storageBucket: "vectiq-a52db.firebasestorage.app",
+  messagingSenderId: "580453317482",
+  appId: "1:580453317482:web:15a248d7fdf8c9b8c34313"
+});
+const db = firebase.firestore();
+
 /* ══════════════════════════════════════════════════════
-   DATA KEYS — must match index.html exactly
+   DATA KEYS — kept for legacy localStorage fallback
 ══════════════════════════════════════════════════════ */
 const AUTH_ACCOUNTS_KEY = 'viq_accounts';
 const LEADERBOARD_KEY   = 'viq_leaderboard';
@@ -566,13 +579,49 @@ let lbFilter = 'all';
 let expandedUser = null;
 
 /* ══════════════════════════════════════════════════════
-   LOAD ALL DATA
+   LOAD ALL DATA FROM FIRESTORE
 ══════════════════════════════════════════════════════ */
-function loadData() {
-  allUsers   = getAllUsers();
-  enrichedLb = getEnrichedLb();
-  document.getElementById('last-refresh').textContent =
-    'Last refresh: ' + new Date().toLocaleTimeString();
+async function loadData() {
+  try {
+    document.getElementById('last-refresh').textContent = 'Loading…';
+
+    // Users
+    const usersSnap = await db.collection('users').get();
+    allUsers = usersSnap.docs.map(doc => {
+      const d = doc.data();
+      const times      = Array.isArray(d.times)      ? d.times      : [];
+      const accuracies = Array.isArray(d.accuracies) ? d.accuracies : [];
+      const bestTime   = times.length ? Math.min(...times) : null;
+      const avgTime    = avg(times);
+      const accPct     = accuracies.length
+        ? Math.round(accuracies.reduce((s,v)=>s+v,0) / accuracies.length / 3 * 100)
+        : null;
+      return {
+        ...d,
+        profile: d,
+        bestTime,
+        avgTime,
+        accPct,
+        ownedCosmetics: d.ownedCosmetics || [],
+        equippedCosmetic: d.equippedCosmetic || 'monkey'
+      };
+    });
+
+    // Completions (leaderboard source)
+    const completionsSnap = await db.collection('completions')
+      .orderBy('completedAt', 'desc').get();
+    const rawLb = completionsSnap.docs.map(doc => ({ ...doc.data(), _id: doc.id }));
+    enrichedLb = rawLb.map(entry => {
+      const c = CASE_BANK.find(c => c.id === entry.caseId);
+      return { ...entry, caseTitle: c ? c.title : entry.caseId, caseDiff: c ? c.difficulty : '?' };
+    });
+
+    document.getElementById('last-refresh').textContent =
+      'Last refresh: ' + new Date().toLocaleTimeString();
+  } catch (err) {
+    console.error('Firestore load error:', err);
+    document.getElementById('last-refresh').textContent = '⚠️ Load failed — check console';
+  }
 }
 
 /* ══════════════════════════════════════════════════════
@@ -594,8 +643,8 @@ function renderSection(name) {
   if (name === 'leaderboard') renderLeaderboard();
 }
 
-function refreshAll() {
-  loadData();
+async function refreshAll() {
+  await loadData();
   const active = document.querySelector('.sb-btn.active');
   if (active) {
     const name = active.id.replace('sb-', '');
@@ -826,28 +875,17 @@ function renderCases() {
 let allActivityEntries = [];
 
 function renderActivity() {
-  // Build activity from all user histories (more accurate - includes accuracy)
-  const entries = [];
-  allUsers.forEach(u => {
-    (u.profile.history||[]).forEach(h => {
-      entries.push({
-        username: u.username,
-        email: u.email,
-        caseId: h.caseId,
-        caseTitle: h.case || h.caseId,
-        time: h.time,
-        acc: h.acc,
-        date: h.date,
-        // For sorting, try to match leaderboard timeSec
-        timeSec: timeStrToSec(h.time)
-      });
-    });
-  });
-  // Sort newest first (by date string, then original order)
-  entries.sort((a,b) => b.date.localeCompare(a.date));
-  allActivityEntries = entries;
+  // Use Firestore completions (enrichedLb) — covers all users across all devices
+  allActivityEntries = enrichedLb.map(entry => ({
+    username: entry.username,
+    email: entry.userId || '',
+    caseTitle: entry.caseTitle,
+    timeSec: entry.timeSec,
+    acc: entry.accuracy || '—',
+    date: entry.date // YYYY-MM-DD
+  }));
 
-  // Build date filter pills
+  // Build date filter pills from YYYY-MM-DD dates
   const dates = [...new Set(enrichedLb.map(e=>e.date))].sort((a,b)=>b.localeCompare(a)).slice(0,10);
   const filterEl = document.getElementById('activity-filter');
   filterEl.innerHTML = `<button class="filter-pill ${activityFilter==='all'?'active':''}" onclick="setActivityFilter('all',this)">All</button>` +
@@ -873,14 +911,18 @@ function renderActivityTable() {
       `<tr><td colspan="5"><div class="empty"><div class="empty-icon">⚡</div>No activity for this period.</div></td></tr>`;
     return;
   }
-  document.getElementById('activity-tbody').innerHTML = filtered.slice(0, 200).map(entry => `
-    <tr>
-      <td class="td-muted">${e(entry.date)}</td>
-      <td><strong>${e(entry.username)}</strong> <span class="td-muted" style="font-size:.75rem">${e(safeEmail(entry.email))}</span></td>
+  document.getElementById('activity-tbody').innerHTML = filtered.slice(0, 200).map(entry => {
+    const niceDate = entry.date && entry.date.includes('-')
+      ? new Date(entry.date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})
+      : (entry.date || '—');
+    return `<tr>
+      <td class="td-muted">${e(niceDate)}</td>
+      <td><strong>${e(entry.username)}</strong> <span class="td-muted" style="font-size:.75rem">${e(entry.email)}</span></td>
       <td>${e(entry.caseTitle)}</td>
-      <td class="td-right td-mono">${e(entry.time)}</td>
+      <td class="td-right td-mono">${fmt(entry.timeSec)}</td>
       <td class="td-right">${e(entry.acc||'—')}</td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
 function setActivityFilter(val, btn) {
@@ -1008,11 +1050,11 @@ function adminSignOut() {
   document.getElementById('login-pass').value = '';
 }
 
-function enterAdmin() {
+async function enterAdmin() {
   document.getElementById('admin-login').style.display = 'none';
   document.getElementById('admin-app').style.display = 'flex';
   document.getElementById('admin-app').style.width = '100%';
-  loadData();
+  await loadData();
   renderDiagnostic();
   renderOverview();
 }
@@ -1021,29 +1063,16 @@ function enterAdmin() {
    DIAGNOSTIC BANNER
 ══════════════════════════════════════════════════════ */
 function renderDiagnostic() {
-  const origin = window.location.origin;
-  const protocol = window.location.protocol;
-  const accountsRaw = localStorage.getItem('viq_accounts');
-  const lbRaw = localStorage.getItem('viq_leaderboard');
-  const accountCount = accountsRaw ? (JSON.parse(accountsRaw).length) : 0;
-  const lbCount = lbRaw ? (JSON.parse(lbRaw).length) : 0;
-
   const el = document.getElementById('diag-banner');
   if (!el) return;
-
-  if (accountCount === 0 && lbCount === 0) {
-    // No data found — likely origin mismatch
-    const isFile = protocol === 'file:';
+  if (allUsers.length === 0 && enrichedLb.length === 0) {
     el.innerHTML = `
       <div class="diag-banner">
         <div class="diag-icon">⚠️</div>
         <div class="diag-body">
-          <strong>No VectIQ data found in this browser context.</strong><br>
-          This admin portal reads from <strong>localStorage</strong>, which is tied to the page's origin.
-          ${isFile
-            ? `You're opening this as a <code>file://</code> page. Make sure <code>index.html</code> is also opened as a local file in the same browser (not via a hosted URL), then sign up and solve a case.`
-            : `Your origin is <code>${e(origin)}</code>. The main <code>index.html</code> must be served from the <strong>same URL</strong> for data to be shared. If you deploy to Netlify, make sure <code>admin.html</code> is deployed alongside <code>index.html</code>.`
-          }
+          <strong>No data in Firestore yet.</strong>
+          Once users sign up and complete cases on VectIQ, they'll appear here instantly.
+          Make sure you're using the updated <code>index.html</code> that syncs to Firebase.
         </div>
       </div>`;
   } else {
@@ -1051,9 +1080,9 @@ function renderDiagnostic() {
       <div class="diag-banner diag-ok">
         <div class="diag-icon">✅</div>
         <div class="diag-body">
-          <strong>Data connected.</strong> Reading from <code>${e(origin)}</code> —
-          <strong>${accountCount}</strong> registered user${accountCount!==1?'s':''} &middot;
-          <strong>${lbCount}</strong> leaderboard entr${lbCount!==1?'ies':'y'} found.
+          <strong>Firebase connected.</strong>
+          <strong>${allUsers.length}</strong> registered user${allUsers.length!==1?'s':''} &middot;
+          <strong>${enrichedLb.length}</strong> case completion${enrichedLb.length!==1?'s':''} across all devices.
         </div>
       </div>`;
   }

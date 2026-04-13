@@ -528,6 +528,8 @@ input { font-family: var(--mono); }
   .case-page-top { padding: 16px; }
 }
 </style>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 <div id="auth-screen" style="display:none">
@@ -1043,6 +1045,56 @@ input { font-family: var(--mono); }
 <div id="toast"></div>
 
 <script>
+/* ── FIREBASE ── */
+firebase.initializeApp({
+  apiKey: "AIzaSyDPRzJ07MdAfzJH5TlcnEQZmBcDdaK5CTo",
+  authDomain: "vectiq-a52db.firebaseapp.com",
+  projectId: "vectiq-a52db",
+  storageBucket: "vectiq-a52db.firebasestorage.app",
+  messagingSenderId: "580453317482",
+  appId: "1:580453317482:web:15a248d7fdf8c9b8c34313"
+});
+const db = firebase.firestore();
+
+function fsKey(email) {
+  return String(email || '').trim().toLowerCase().replace(/[.#$[\]]/g, '_');
+}
+
+async function fsSyncUser(account, prof, isNew) {
+  try {
+    const data = {
+      username: account.username,
+      email: String(account.email || '').trim().toLowerCase(),
+      equippedCosmetic: account.equippedCosmetic || 'monkey',
+      ownedCosmetics: account.ownedCosmetics || ['monkey'],
+      points: prof.points || 0,
+      streak: prof.streak || 0,
+      solved: prof.solved || 0,
+      times: prof.times || [],
+      accuracies: prof.accuracies || [],
+      history: (prof.history || []).slice(0, 20),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    if (isNew) data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+    await db.collection('users').doc(fsKey(account.email)).set(data, { merge: true });
+  } catch (err) { console.warn('Firestore user sync:', err.message); }
+}
+
+async function fsSyncCompletion(caseId, timeSec, accuracy) {
+  if (!currentUser) return;
+  try {
+    await db.collection('completions').add({
+      userId: String(currentUser.email || '').trim().toLowerCase(),
+      username: currentUser.username,
+      caseId,
+      timeSec,
+      accuracy,
+      date: new Date().toLocaleDateString('en-CA'),
+      completedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch (err) { console.warn('Firestore completion sync:', err.message); }
+}
+
 const TOPIC_LABELS = {
   kinematics: 'Kinematics',
   forces: 'Dynamics (Forces)',
@@ -1246,6 +1298,7 @@ function profileKeyFor(email) {
 function saveProfile() {
   if (!currentUser) return;
   localStorage.setItem(profileKeyFor(currentUser.email), JSON.stringify(profile));
+  fsSyncUser(currentUser, profile, false);
 }
 
 function loadProfileForCurrentUser() {
@@ -1325,6 +1378,7 @@ function createAccount() {
   currentUser = { username, email, ownedCosmetics: [starter], equippedCosmetic: starter };
   saveSession();
   loadProfileForCurrentUser();
+  fsSyncUser(currentUser, profile, true);
   renderUserIdentity();
   enterApp();
   showToast('Account created');
@@ -2081,6 +2135,7 @@ function completeCase() {
     date: new Date().toLocaleDateString('en-CA')
   });
   saveLeaderboard(lb);
+  fsSyncCompletion(currentCase.id, timerSeconds, accuracy);
   renderLeaderboard();
   renderLeaderboardPage();
   renderCosmeticsShop();
