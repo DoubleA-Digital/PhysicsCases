@@ -217,6 +217,62 @@ tbody tr:hover td { background: rgba(255,255,255,.02); }
 .filter-pill:hover { border-color: var(--border2); color: var(--text); }
 .filter-pill.active { background: rgba(79,142,247,.12); border-color: var(--accent); color: var(--accent); }
 
+/* ── ADMIN LOGIN ── */
+#admin-login {
+  position: fixed; inset: 0; z-index: 999;
+  background:
+    radial-gradient(circle at 25% 0%, rgba(79,142,247,.18) 0%, transparent 45%),
+    radial-gradient(circle at 75% 100%, rgba(139,92,246,.14) 0%, transparent 40%),
+    var(--bg);
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+}
+.login-card {
+  width: min(440px,100%);
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: 16px; padding: 36px;
+  position: relative; overflow: hidden;
+}
+.login-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--purple));
+}
+.login-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; }
+.login-sub { font-size: .85rem; color: var(--muted); margin-bottom: 28px; }
+.login-row { margin-bottom: 14px; }
+.login-label { display: block; font-size: .7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 6px; }
+.login-input {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border2);
+  color: var(--text); font-family: var(--mono); font-size: .95rem;
+  padding: 11px 14px; border-radius: 8px; outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+.login-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,142,247,.12); }
+.login-btn {
+  width: 100%; padding: 12px; border-radius: 8px; border: none;
+  background: var(--accent); color: #fff; font-size: .92rem; font-weight: 600;
+  margin-top: 6px; transition: all .2s;
+}
+.login-btn:hover { background: #3B7DE8; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(79,142,247,.35); }
+.login-error {
+  background: rgba(248,81,73,.1); border: 1px solid rgba(248,81,73,.3);
+  color: var(--red); padding: 10px 14px; border-radius: 8px;
+  font-size: .82rem; margin-bottom: 14px; display: none;
+}
+.login-error.show { display: block; }
+
+/* ── DIAGNOSTIC BANNER ── */
+.diag-banner {
+  background: rgba(210,153,34,.08); border: 1px solid rgba(210,153,34,.25);
+  border-radius: 10px; padding: 16px 20px; margin-bottom: 24px;
+  display: flex; align-items: flex-start; gap: 14px;
+}
+.diag-icon { font-size: 1.3rem; flex-shrink: 0; margin-top: 1px; }
+.diag-body { flex: 1; font-size: .82rem; line-height: 1.65; color: var(--muted); }
+.diag-body strong { color: var(--yellow); }
+.diag-body code { font-family: var(--mono); background: var(--bg3); padding: 1px 6px; border-radius: 4px; font-size: .78rem; }
+.diag-ok { background: rgba(63,185,80,.08); border-color: rgba(63,185,80,.25); }
+.diag-ok .diag-body strong { color: var(--green); }
+
 /* ── RESPONSIVE ── */
 @media (max-width: 900px) {
   :root { --sidebar: 60px; }
@@ -230,6 +286,29 @@ tbody tr:hover td { background: rgba(255,255,255,.02); }
 </style>
 </head>
 <body>
+
+<!-- ADMIN LOGIN -->
+<div id="admin-login">
+  <div class="login-card">
+    <p style="font-size:.72rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:10px">⚗️ VectIQ</p>
+    <div class="login-title">Admin Portal</div>
+    <div class="login-sub">Sign in to access the dashboard.</div>
+    <div class="login-error" id="login-error">Incorrect username or password.</div>
+    <div class="login-row">
+      <label class="login-label">Username</label>
+      <input class="login-input" type="text" id="login-user" placeholder="admin" autocomplete="username" onkeydown="if(event.key==='Enter')adminLogin()">
+    </div>
+    <div class="login-row">
+      <label class="login-label">Password</label>
+      <input class="login-input" type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')adminLogin()">
+    </div>
+    <button class="login-btn" onclick="adminLogin()">Sign In →</button>
+    <p style="font-size:.72rem;color:var(--muted2);margin-top:14px;text-align:center">Session ends when you close the tab.</p>
+  </div>
+</div>
+
+<!-- ADMIN APP (hidden until logged in) -->
+<div id="admin-app" style="display:none;width:100%;display:none">
 
 <!-- SIDEBAR -->
 <aside id="sidebar">
@@ -257,6 +336,7 @@ tbody tr:hover td { background: rgba(255,255,255,.02); }
   <div class="sb-footer">
     <div id="last-refresh">Loading…</div>
     <button class="refresh-btn" onclick="refreshAll()">↻ Refresh Data</button>
+    <button class="refresh-btn" onclick="adminSignOut()" style="margin-top:6px;color:var(--red);border-color:rgba(248,81,73,.3)">Sign Out</button>
   </div>
 </aside>
 
@@ -269,6 +349,8 @@ tbody tr:hover td { background: rgba(255,255,255,.02); }
       <h1>Overview</h1>
       <p>Live snapshot of VectIQ activity — read from localStorage.</p>
     </div>
+
+    <div id="diag-banner"></div>
 
     <div class="kpi-grid" id="kpi-grid"></div>
 
@@ -404,6 +486,8 @@ tbody tr:hover td { background: rgba(255,255,255,.02); }
   </div>
 
 </main>
+
+</div><!-- /#admin-app -->
 
 <script>
 /* ══════════════════════════════════════════════════════
@@ -895,10 +979,98 @@ function getCosmeticIcon(id) {
 }
 
 /* ══════════════════════════════════════════════════════
+   ADMIN AUTH  (change these to update credentials)
+══════════════════════════════════════════════════════ */
+const ADMIN_USERNAME = 'admin';
+const ADMIN_PASSWORD = 'vectiq2024';
+const ADMIN_SESSION_KEY = 'viq_admin_auth';
+
+function adminLogin() {
+  const u = (document.getElementById('login-user').value || '').trim();
+  const p = document.getElementById('login-pass').value || '';
+  const err = document.getElementById('login-error');
+  if (u === ADMIN_USERNAME && p === ADMIN_PASSWORD) {
+    sessionStorage.setItem(ADMIN_SESSION_KEY, '1');
+    err.classList.remove('show');
+    enterAdmin();
+  } else {
+    err.classList.add('show');
+    document.getElementById('login-pass').value = '';
+    document.getElementById('login-pass').focus();
+  }
+}
+
+function adminSignOut() {
+  sessionStorage.removeItem(ADMIN_SESSION_KEY);
+  document.getElementById('admin-app').style.display = 'none';
+  document.getElementById('admin-login').style.display = 'flex';
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+}
+
+function enterAdmin() {
+  document.getElementById('admin-login').style.display = 'none';
+  document.getElementById('admin-app').style.display = 'flex';
+  document.getElementById('admin-app').style.width = '100%';
+  loadData();
+  renderDiagnostic();
+  renderOverview();
+}
+
+/* ══════════════════════════════════════════════════════
+   DIAGNOSTIC BANNER
+══════════════════════════════════════════════════════ */
+function renderDiagnostic() {
+  const origin = window.location.origin;
+  const protocol = window.location.protocol;
+  const accountsRaw = localStorage.getItem('viq_accounts');
+  const lbRaw = localStorage.getItem('viq_leaderboard');
+  const accountCount = accountsRaw ? (JSON.parse(accountsRaw).length) : 0;
+  const lbCount = lbRaw ? (JSON.parse(lbRaw).length) : 0;
+
+  const el = document.getElementById('diag-banner');
+  if (!el) return;
+
+  if (accountCount === 0 && lbCount === 0) {
+    // No data found — likely origin mismatch
+    const isFile = protocol === 'file:';
+    el.innerHTML = `
+      <div class="diag-banner">
+        <div class="diag-icon">⚠️</div>
+        <div class="diag-body">
+          <strong>No VectIQ data found in this browser context.</strong><br>
+          This admin portal reads from <strong>localStorage</strong>, which is tied to the page's origin.
+          ${isFile
+            ? `You're opening this as a <code>file://</code> page. Make sure <code>index.html</code> is also opened as a local file in the same browser (not via a hosted URL), then sign up and solve a case.`
+            : `Your origin is <code>${e(origin)}</code>. The main <code>index.html</code> must be served from the <strong>same URL</strong> for data to be shared. If you deploy to Netlify, make sure <code>admin.html</code> is deployed alongside <code>index.html</code>.`
+          }
+        </div>
+      </div>`;
+  } else {
+    el.innerHTML = `
+      <div class="diag-banner diag-ok">
+        <div class="diag-icon">✅</div>
+        <div class="diag-body">
+          <strong>Data connected.</strong> Reading from <code>${e(origin)}</code> —
+          <strong>${accountCount}</strong> registered user${accountCount!==1?'s':''} &middot;
+          <strong>${lbCount}</strong> leaderboard entr${lbCount!==1?'ies':'y'} found.
+        </div>
+      </div>`;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
    INIT
 ══════════════════════════════════════════════════════ */
-loadData();
-renderOverview();
+if (sessionStorage.getItem(ADMIN_SESSION_KEY) === '1') {
+  enterAdmin();
+} else {
+  // Show login, hide app
+  document.getElementById('admin-login').style.display = 'flex';
+  document.getElementById('admin-app').style.display = 'none';
+  // Focus username field
+  setTimeout(() => document.getElementById('login-user').focus(), 100);
+}
 </script>
 </body>
 </html>
