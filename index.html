@@ -1356,6 +1356,8 @@ function enterApp() {
   refreshInfiniteQuestions();
   renderArchiveList();
   renderLeaderboard();
+  // Sync this user's account + profile to Firestore on every login/session restore
+  if (currentUser) fsSyncUser(currentUser, profile, false);
 }
 
 function showAuthScreen() {
