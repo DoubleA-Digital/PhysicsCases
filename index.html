@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Physics Cases</title>
+<title>VectIQ</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -117,6 +117,7 @@ input { font-family: var(--mono); }
 .badge-muted { background: var(--bg3); color: var(--muted); border: 1px solid var(--border); }
 .badge-purple { background: rgba(139,92,246,.15); color: var(--purple); border: 1px solid rgba(139,92,246,.25); }
 .badge-yellow { background: rgba(210,153,34,.15); color: var(--yellow); border: 1px solid rgba(210,153,34,.25); }
+.badge-danger { background: rgba(248,81,73,.12); color: var(--red); border: 1px solid rgba(248,81,73,.25); }
 
 /* ── INPUT ── */
 .input-wrap { position: relative; }
@@ -334,6 +335,24 @@ input { font-family: var(--mono); }
 .practice-item-title { font-weight: 600; font-size: .92rem; }
 .practice-item-meta { display: flex; gap: 8px; align-items: center; }
 .practice-item-desc { font-size: .82rem; color: var(--muted); line-height: 1.55; }
+.practice-topic-group { margin-bottom: 10px; }
+.practice-topic-title {
+  font-size: .9rem; font-weight: 700; margin: 8px 0 10px;
+  color: var(--text);
+}
+.practice-level { margin-bottom: 8px; }
+.practice-level-head {
+  font-size: .72rem; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 8px;
+}
+.choice-grid { display: grid; gap: 8px; margin-top: 12px; }
+.choice-btn {
+  text-align: left; background: var(--bg3); color: var(--text);
+  border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px;
+  font-size: .86rem; transition: all .2s;
+}
+.choice-btn:hover { border-color: var(--border2); }
+.choice-btn.selected { border-color: var(--accent); background: rgba(79,142,247,.1); }
 
 /* Practice solve view */
 .practice-solve { display: none; }
@@ -406,7 +425,7 @@ input { font-family: var(--mono); }
 <nav id="nav">
   <div class="nav-logo" onclick="showPage('home')">
     <span class="logo-icon">⚗️</span>
-    <span>Physics<span style="color:var(--muted);font-weight:400">Cases</span></span>
+    <span>Vect<span style="color:var(--muted);font-weight:400">IQ</span></span>
   </div>
   <div class="nav-links">
     <button class="nav-link active" id="nl-home" onclick="showPage('home')">Home</button>
@@ -420,33 +439,33 @@ input { font-family: var(--mono); }
 <!-- ════ HOME PAGE ════ -->
 <div class="page active" id="page-home">
   <div class="hero">
-    <p class="hero-eyebrow">AP Physics · Case Files</p>
+    <p class="hero-eyebrow">VectIQ · AP Physics 1</p>
     <h1 class="hero-title">Solve Physics<br><span>Mysteries</span></h1>
-    <p class="hero-sub">Weekly real-world physics cases. Reason through each step, track your performance, and think like a scientist.</p>
-    <button class="btn btn-primary btn-lg" onclick="showPage('case')">Start This Week's Case →</button>
+    <p class="hero-sub">Daily real-world AP Physics 1 cases. Reason through each step, track your performance, and think like a scientist.</p>
+    <button class="btn btn-primary btn-lg" onclick="showPage('case')">Start Today's Case →</button>
   </div>
 
   <div class="container-sm">
     <!-- Main Case Card -->
     <div class="case-main-card">
       <div class="case-meta">
-        <span class="badge badge-blue">🧩 Case #003</span>
-        <span class="badge badge-yellow">⚡ This Week</span>
-        <span class="badge badge-muted">Energy</span>
+        <span class="badge badge-blue" id="home-case-num">🧩 Case #003</span>
+        <span class="badge badge-yellow" id="home-case-window">⚡ Today</span>
+        <span class="badge badge-muted" id="home-case-topic">Energy</span>
       </div>
-      <div class="case-title">The Failed Rocket Launch</div>
-      <div class="case-excerpt">A test rocket failed to reach its expected altitude during a controlled launch. Engineers recorded the launch data but can't pinpoint what went wrong. Using the physics of energy conservation, can you figure out what happened?</div>
+      <div class="case-title" id="home-case-title">The Failed Rocket Launch</div>
+      <div class="case-excerpt" id="home-case-excerpt">A test rocket failed to reach its expected altitude during a controlled launch. Engineers recorded the launch data but can't pinpoint what went wrong. Using the physics of energy conservation, can you figure out what happened?</div>
       <button class="btn btn-primary" onclick="showPage('case')">Solve Now →</button>
     </div>
 
     <!-- Teaser -->
     <div class="teaser-card">
       <div class="teaser-left">
-        <div class="teaser-tag">🔮 Coming Next Week</div>
-        <h3>Topic: Momentum</h3>
-        <p>"A collision leaves engineers confused…"</p>
+        <div class="teaser-tag">🔮 Coming Tomorrow</div>
+        <h3 id="tomorrow-topic">Topic: Momentum</h3>
+        <p id="tomorrow-tease">"A collision leaves engineers confused…"</p>
       </div>
-      <button class="btn btn-ghost btn-sm" disabled>Prepare Soon</button>
+      <button class="btn btn-ghost btn-sm" disabled>Drops Tomorrow</button>
     </div>
 
     <!-- How It Works -->
@@ -485,8 +504,8 @@ input { font-family: var(--mono); }
   <!-- Top bar -->
   <div class="case-page-top">
     <div class="case-page-info">
-      <h2>Case #003: The Failed Rocket Launch</h2>
-      <p>Energy Conservation · 3 Steps · Medium</p>
+      <h2 id="case-header-title">Case #003: The Failed Rocket Launch</h2>
+      <p id="case-header-meta">Energy Conservation · 3 Steps · Medium</p>
     </div>
     <div class="case-actions">
       <div class="timer-display">
@@ -512,17 +531,19 @@ input { font-family: var(--mono); }
       <div>
         <div class="card">
           <h3 class="label">📖 Story</h3>
-          <p class="story-text">
+          <p class="story-text" id="case-story">
             During a controlled test launch, a prototype rocket with a mass of 200 kg was fired straight upward with an initial velocity of 80 m/s. According to the pre-launch simulation, the rocket should have reached a predictable maximum height. But mid-flight telemetry showed the rocket only reached 280 meters before descending — well below the expected altitude. Engineers suspect energy was lost somewhere in the system. Your job is to figure out exactly what happened and how much was lost.
           </p>
         </div>
 
         <div class="card given-card" style="margin-top:20px">
           <h3 class="label">📊 Given</h3>
-          <div class="given-item"><span class="given-key">Mass (m)</span><span class="given-val">200 kg</span></div>
-          <div class="given-item"><span class="given-key">Initial velocity (v₀)</span><span class="given-val">80 m/s</span></div>
-          <div class="given-item"><span class="given-key">Actual height (h_actual)</span><span class="given-val">280 m</span></div>
-          <div class="given-item"><span class="given-key">g</span><span class="given-val">9.8 m/s²</span></div>
+          <div id="given-list">
+            <div class="given-item"><span class="given-key">Mass (m)</span><span class="given-val">200 kg</span></div>
+            <div class="given-item"><span class="given-key">Initial velocity (v₀)</span><span class="given-val">80 m/s</span></div>
+            <div class="given-item"><span class="given-key">Actual height (h_actual)</span><span class="given-val">280 m</span></div>
+            <div class="given-item"><span class="given-key">g</span><span class="given-val">9.8 m/s²</span></div>
+          </div>
         </div>
 
         <!-- Completion card (shown after all steps) -->
@@ -530,7 +551,7 @@ input { font-family: var(--mono); }
           <div class="completion-inner">
             <div class="completion-icon">🎯</div>
             <div class="completion-title">Case Complete!</div>
-            <div class="completion-sub" id="comp-sub">You solved the rocket mystery.</div>
+            <div class="completion-sub" id="comp-sub">You solved today's mystery.</div>
             <div class="results-grid">
               <div class="result-cell"><div class="result-icon">⏱️</div><div class="result-val" id="res-time">—</div><div class="result-label">Time</div></div>
               <div class="result-cell"><div class="result-icon">🎯</div><div class="result-val" id="res-acc">—</div><div class="result-label">Accuracy</div></div>
@@ -542,29 +563,32 @@ input { font-family: var(--mono); }
               <hr class="divider">
               <p class="label" style="margin-bottom:16px">📚 Full Solution</p>
               <div class="solution-step">
-                <div class="solution-step-title">Step 1 — Predicted Height</div>
-                <div class="solution-step-body">Using energy conservation (KE = PE): ½mv² = mgh<br>→ h = v²/(2g) = 80²/(2 × 9.8) = 6400/19.6 ≈ <strong style="color:var(--accent)">326.5 m</strong><br>This is the height the rocket should have reached with no energy loss.</div>
+                <div class="solution-step-title" id="sol-step-title-1">Step 1 — Predicted Height</div>
+                <div class="solution-step-body" id="sol-step-body-1">Using energy conservation (KE = PE): ½mv² = mgh<br>→ h = v²/(2g) = 80²/(2 × 9.8) = 6400/19.6 ≈ <strong style="color:var(--accent)">326.5 m</strong><br>This is the height the rocket should have reached with no energy loss.</div>
               </div>
               <div class="solution-step">
-                <div class="solution-step-title">Step 2 — Energy Lost</div>
-                <div class="solution-step-body">Initial KE = ½mv² = ½ × 200 × 80² = 640,000 J<br>PE at actual height = mgh = 200 × 9.8 × 280 = 548,800 J<br>Energy lost = 640,000 − 548,800 = <strong style="color:var(--accent)">91,200 J</strong></div>
+                <div class="solution-step-title" id="sol-step-title-2">Step 2 — Energy Lost</div>
+                <div class="solution-step-body" id="sol-step-body-2">Initial KE = ½mv² = ½ × 200 × 80² = 640,000 J<br>PE at actual height = mgh = 200 × 9.8 × 280 = 548,800 J<br>Energy lost = 640,000 − 548,800 = <strong style="color:var(--accent)">91,200 J</strong></div>
               </div>
               <div class="solution-step">
-                <div class="solution-step-title">Step 3 — Percentage Lost</div>
-                <div class="solution-step-body">% lost = (91,200 / 640,000) × 100 ≈ <strong style="color:var(--accent)">14.25%</strong><br>About 14% of the rocket's kinetic energy was lost to drag and heat.</div>
+                <div class="solution-step-title" id="sol-step-title-3">Step 3 — Percentage Lost</div>
+                <div class="solution-step-body" id="sol-step-body-3">% lost = (91,200 / 640,000) × 100 ≈ <strong style="color:var(--accent)">14.25%</strong><br>About 14% of the rocket's kinetic energy was lost to drag and heat.</div>
               </div>
 
               <div class="concepts-section">
                 <p class="label" style="margin-bottom:10px">🎓 Concepts Covered</p>
-                <span class="concept-tag">⚡ Conservation of Energy</span>
-                <span class="concept-tag">📐 KE = ½mv²</span>
-                <span class="concept-tag">📐 PE = mgh</span>
-                <span class="concept-tag">📉 Energy Loss</span>
+                <div id="concepts-list">
+                  <span class="concept-tag">⚡ Conservation of Energy</span>
+                  <span class="concept-tag">📐 KE = ½mv²</span>
+                  <span class="concept-tag">📐 PE = mgh</span>
+                  <span class="concept-tag">📉 Energy Loss</span>
+                </div>
               </div>
             </div>
 
             <div style="margin-top:24px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
               <button class="btn btn-secondary" onclick="showPage('practice')">📚 Practice More</button>
+              <button class="btn btn-secondary" onclick="redoCurrentCase()">🔁 Redo This Case</button>
               <button class="btn btn-ghost" onclick="showPage('archive')">🗂️ Case Archive</button>
             </div>
           </div>
@@ -581,14 +605,14 @@ input { font-family: var(--mono); }
 
         <!-- Step 1 -->
         <div class="card step-card" id="step-1">
-          <div class="step-title">Step 1: Predicted Height</div>
-          <div class="step-prompt">If no energy was lost, what is the maximum height the rocket should have reached? Use conservation of energy.</div>
+          <div class="step-title" id="step-title-1">Step 1: Predicted Height</div>
+          <div class="step-prompt" id="step-prompt-1">If no energy was lost, what is the maximum height the rocket should have reached? Use conservation of energy.</div>
           <div class="step-input-row">
             <div class="step-input-wrap">
               <label class="step-input-label">Your Answer</label>
               <div class="input-wrap">
                 <input class="input" type="number" id="ans-1" placeholder="0.00" step="0.1" onkeydown="if(event.key==='Enter')checkStep(1)">
-                <span class="input-unit">m</span>
+                <span class="input-unit" id="ans-1-unit">m</span>
               </div>
             </div>
             <button class="btn btn-primary" onclick="checkStep(1)">Submit</button>
@@ -598,11 +622,11 @@ input { font-family: var(--mono); }
             <div class="hint-list" id="hints-1">
               <div class="hint-item" id="hint-1-1">
                 <div class="hint-item-label">Hint 1</div>
-                Use conservation of energy: all kinetic energy converts to potential energy at max height.
+                <span id="hint-1-1-text">Use conservation of energy: all kinetic energy converts to potential energy at max height.</span>
               </div>
               <div class="hint-item" id="hint-1-2">
                 <div class="hint-item-label">Hint 2</div>
-                KE = PE → ½mv² = mgh → h = v²/(2g). Plug in v = 80, g = 9.8.
+                <span id="hint-1-2-text">KE = PE → ½mv² = mgh → h = v²/(2g). Plug in v = 80, g = 9.8.</span>
               </div>
             </div>
           </div>
@@ -611,14 +635,14 @@ input { font-family: var(--mono); }
 
         <!-- Step 2 -->
         <div class="card step-card" id="step-2" style="display:none">
-          <div class="step-title">Step 2: Energy Lost</div>
-          <div class="step-prompt">The rocket actually reached 280 m. How many joules of energy were lost compared to the ideal case?</div>
+          <div class="step-title" id="step-title-2">Step 2: Energy Lost</div>
+          <div class="step-prompt" id="step-prompt-2">The rocket actually reached 280 m. How many joules of energy were lost compared to the ideal case?</div>
           <div class="step-input-row">
             <div class="step-input-wrap">
               <label class="step-input-label">Your Answer</label>
               <div class="input-wrap">
                 <input class="input" type="number" id="ans-2" placeholder="0" step="100" onkeydown="if(event.key==='Enter')checkStep(2)">
-                <span class="input-unit">J</span>
+                <span class="input-unit" id="ans-2-unit">J</span>
               </div>
             </div>
             <button class="btn btn-primary" onclick="checkStep(2)">Submit</button>
@@ -628,11 +652,11 @@ input { font-family: var(--mono); }
             <div class="hint-list" id="hints-2">
               <div class="hint-item" id="hint-2-1">
                 <div class="hint-item-label">Hint 1</div>
-                Find the initial kinetic energy: KE = ½mv². Then find the PE gained at 280 m: PE = mgh.
+                <span id="hint-2-1-text">Find the initial kinetic energy: KE = ½mv². Then find the PE gained at 280 m: PE = mgh.</span>
               </div>
               <div class="hint-item" id="hint-2-2">
                 <div class="hint-item-label">Hint 2</div>
-                Energy lost = Initial KE − PE at actual height. KE = ½(200)(80²) = 640,000 J. PE = 200 × 9.8 × 280.
+                <span id="hint-2-2-text">Energy lost = Initial KE − PE at actual height. KE = ½(200)(80²) = 640,000 J. PE = 200 × 9.8 × 280.</span>
               </div>
             </div>
           </div>
@@ -641,14 +665,14 @@ input { font-family: var(--mono); }
 
         <!-- Step 3 -->
         <div class="card step-card" id="step-3" style="display:none">
-          <div class="step-title">Step 3: Percentage Lost</div>
-          <div class="step-prompt">What percentage of the rocket's initial kinetic energy was lost? Round to 2 decimal places.</div>
+          <div class="step-title" id="step-title-3">Step 3: Percentage Lost</div>
+          <div class="step-prompt" id="step-prompt-3">What percentage of the rocket's initial kinetic energy was lost? Round to 2 decimal places.</div>
           <div class="step-input-row">
             <div class="step-input-wrap">
               <label class="step-input-label">Your Answer</label>
               <div class="input-wrap">
                 <input class="input" type="number" id="ans-3" placeholder="0.00" step="0.1" onkeydown="if(event.key==='Enter')checkStep(3)">
-                <span class="input-unit">%</span>
+                <span class="input-unit" id="ans-3-unit">%</span>
               </div>
             </div>
             <button class="btn btn-primary" onclick="checkStep(3)">Submit</button>
@@ -658,11 +682,11 @@ input { font-family: var(--mono); }
             <div class="hint-list" id="hints-3">
               <div class="hint-item" id="hint-3-1">
                 <div class="hint-item-label">Hint 1</div>
-                Percentage = (energy lost / initial energy) × 100
+                <span id="hint-3-1-text">Percentage = (energy lost / initial energy) × 100</span>
               </div>
               <div class="hint-item" id="hint-3-2">
                 <div class="hint-item-label">Hint 2</div>
-                Use your Step 2 answer. Divide it by 640,000 J (initial KE) and multiply by 100.
+                <span id="hint-3-2-text">Use your Step 2 answer. Divide it by 640,000 J (initial KE) and multiply by 100.</span>
               </div>
             </div>
           </div>
@@ -678,63 +702,8 @@ input { font-family: var(--mono); }
   <div class="container section-sm">
     <p class="label">All Cases</p>
     <h1 class="page-title" style="margin-bottom:8px">Case Archive</h1>
-    <p class="page-sub" style="margin-bottom:32px">All available cases — solved and unsolved.</p>
-    <div class="archive-list">
-      <div class="archive-card" onclick="showPage('case')">
-        <div class="archive-left">
-          <div class="archive-num">#003</div>
-          <div>
-            <div class="archive-title">The Failed Rocket Launch</div>
-            <div class="archive-meta">
-              <span class="badge badge-yellow" style="font-size:.68rem">⚡ This Week</span>
-              <span>Energy Conservation</span>
-              <span>·</span>
-              <span>Medium</span>
-            </div>
-          </div>
-        </div>
-        <div class="archive-right">
-          <span id="arc-003-status" class="status-open">⬜</span>
-          <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();showPage('case')">Solve →</button>
-        </div>
-      </div>
-
-      <div class="archive-card" style="opacity:.6;cursor:default">
-        <div class="archive-left">
-          <div class="archive-num">#002</div>
-          <div>
-            <div class="archive-title">The Drifting Satellite</div>
-            <div class="archive-meta">
-              <span>Circular Motion · Forces</span>
-              <span>·</span>
-              <span>Hard</span>
-            </div>
-          </div>
-        </div>
-        <div class="archive-right">
-          <span class="status-complete">✅</span>
-          <span class="badge badge-muted" style="font-size:.7rem">Solved</span>
-        </div>
-      </div>
-
-      <div class="archive-card" style="opacity:.6;cursor:default">
-        <div class="archive-left">
-          <div class="archive-num">#001</div>
-          <div>
-            <div class="archive-title">The Broken Elevator</div>
-            <div class="archive-meta">
-              <span>Kinematics · Forces</span>
-              <span>·</span>
-              <span>Easy</span>
-            </div>
-          </div>
-        </div>
-        <div class="archive-right">
-          <span class="status-complete">✅</span>
-          <span class="badge badge-muted" style="font-size:.7rem">Solved</span>
-        </div>
-      </div>
-    </div>
+    <p class="page-sub" style="margin-bottom:32px">Open any case from the archive and redo it anytime.</p>
+    <div class="archive-list" id="archive-list"></div>
   </div>
 </div>
 
@@ -743,18 +712,25 @@ input { font-family: var(--mono); }
   <div class="container section-sm">
     <p class="label">Practice Problems</p>
     <h1 class="page-title" style="margin-bottom:8px">Practice</h1>
-    <p class="page-sub" style="margin-bottom:28px">Targeted problems by topic. No timer. Instant feedback.</p>
+    <p class="page-sub" style="margin-bottom:20px">AP-style questions across all AP Physics 1 topics, grouped by topic and level.</p>
+    <div class="badge badge-purple" style="margin-bottom:10px">Aligned to AP Physics 1 topics (Units 1-7)</div>
+    <p class="page-sub" style="margin-top:0;margin-bottom:18px;font-size:.84rem">Reference: <a href="https://apcentral.collegeboard.org/media/pdf/ap-physics-1-course-at-a-glance.pdf" target="_blank" rel="noopener" style="color:var(--accent)">AP Physics 1 Course at a Glance</a></p>
 
     <div class="practice-cats" id="practice-cats">
       <button class="cat-pill active" onclick="filterPractice('all', this)">All</button>
       <button class="cat-pill" onclick="filterPractice('kinematics', this)">Kinematics</button>
       <button class="cat-pill" onclick="filterPractice('forces', this)">Forces</button>
+      <button class="cat-pill" onclick="filterPractice('circular', this)">Circular Motion + Gravitation</button>
       <button class="cat-pill" onclick="filterPractice('energy', this)">Energy</button>
       <button class="cat-pill" onclick="filterPractice('momentum', this)">Momentum</button>
+      <button class="cat-pill" onclick="filterPractice('shm', this)">Simple Harmonic Motion</button>
+      <button class="cat-pill" onclick="filterPractice('rotation', this)">Torque + Rotation</button>
     </div>
 
-    <!-- Problem list view -->
+    <p class="label" style="margin-top:4px">Quantitative Sets</p>
     <div class="practice-list" id="practice-list"></div>
+    <p class="label" style="margin-top:26px">Conceptual Questions</p>
+    <div class="practice-list" id="concept-list"></div>
 
     <!-- Solve view -->
     <div class="practice-solve" id="practice-solve">
@@ -768,8 +744,9 @@ input { font-family: var(--mono); }
           <div id="psolve-badges"></div>
         </div>
         <p class="practice-q" id="psolve-q"></p>
+        <div id="psolve-choices" class="choice-grid" style="display:none"></div>
         <hr class="divider">
-        <div class="step-input-row" style="margin-bottom:14px">
+        <div class="step-input-row" style="margin-bottom:14px" id="psolve-input-row">
           <div class="step-input-wrap">
             <label class="step-input-label" id="psolve-unit-label">Your Answer</label>
             <div class="input-wrap">
@@ -835,90 +812,136 @@ input { font-family: var(--mono); }
 <div id="toast"></div>
 
 <script>
-// ─── DATA ────────────────────────────────────────────────────
-const PRACTICE = [
+const TOPIC_LABELS = {
+  kinematics: 'Kinematics',
+  forces: 'Dynamics (Forces)',
+  circular: 'Circular Motion + Gravitation',
+  energy: 'Energy',
+  momentum: 'Momentum',
+  shm: 'Simple Harmonic Motion',
+  rotation: 'Torque + Rotational Motion'
+};
+const DIFF_ORDER = ['Easy', 'Medium', 'Hard', 'Very Hard'];
+const DIFF_BADGE = { Easy: 'badge-green', Medium: 'badge-yellow', Hard: 'badge-purple', 'Very Hard': 'badge-danger' };
+const PERSIST_KEY = 'viq_profile';
+
+const CASE_BANK = [
   {
-    id: 'p1', topic: 'kinematics', title: 'Constant Acceleration',
-    difficulty: 'Easy',
-    question: 'A car accelerates from rest (0 m/s) to 30 m/s in 6 seconds. Assuming constant acceleration, what is the acceleration?',
-    answer: 5, tolerance: 0.2, unit: 'm/s²',
-    hints: ['Use the definition of acceleration: a = Δv / Δt', 'a = (30 − 0) / 6 = ?'],
-    solution: 'a = Δv / Δt = (30 − 0) / 6 = <span class="sol-val">5 m/s²</span>'
+    id: '#001', title: 'The Broken Elevator Sensor', topic: 'Kinematics + Dynamics', difficulty: 'Easy',
+    teaser: '"The readings disagree by exactly one floor..."',
+    story: 'A building elevator stopped between floors during a routine safety test. A motion sensor reports the cabin accelerated upward briefly, but the floor counter says it moved less than predicted. Your team must reconstruct the motion and identify which subsystem lost performance.',
+    given: [{k:'Mass (m)',v:'600 kg'},{k:'Net upward force phase',v:'1800 N for 2.0 s'},{k:'Then coasts upward',v:'3.0 s before stop'},{k:'g',v:'9.8 m/s²'}],
+    steps: [
+      {title:'Step 1: Find Initial Acceleration', prompt:'During the powered phase, what was the elevator acceleration?', unit:'m/s²', answer:3.0, tolerance:0.15, hints:['Use F_net = ma directly.','a = 1800 / 600'], ok:'Nice. The powered acceleration is 3.0 m/s².', fail:'Use Newton\'s second law with net force and mass.', solTitle:'Step 1 — Acceleration', solBody:'a = F_net/m = 1800/600 = <strong style="color:var(--accent)">3.0 m/s²</strong>'},
+      {title:'Step 2: Speed After Powered Phase', prompt:'What speed did the elevator reach after 2.0 s of powered acceleration?', unit:'m/s', answer:6.0, tolerance:0.2, hints:['From rest with constant acceleration: v = at.','v = 3.0 × 2.0'], ok:'Correct. It reached 6.0 m/s before coasting.', fail:'Use v = v0 + at with v0 = 0.', solTitle:'Step 2 — Exit Speed', solBody:'v = at = 3.0 × 2.0 = <strong style="color:var(--accent)">6.0 m/s</strong>'},
+      {title:'Step 3: Coasting Distance', prompt:'If it then coasted upward for 3.0 s to rest (uniform deceleration), how far did it travel while coasting?', unit:'m', answer:9.0, tolerance:0.3, hints:['Average speed over uniform decel to rest is (v_i + v_f)/2.','x = ((6 + 0)/2) × 3'], ok:'Great. Coasting added 9.0 m, useful for checking floor mismatch.', fail:'Use average velocity for linear deceleration.', solTitle:'Step 3 — Coasting Distance', solBody:'x = v_avg t = ((6+0)/2)×3 = <strong style="color:var(--accent)">9.0 m</strong>'}
+    ],
+    concepts: ['Kinematics graphs','Newton\'s second law','Average velocity','System diagnostics']
   },
   {
-    id: 'p2', topic: 'kinematics', title: 'Projectile Up & Down',
-    difficulty: 'Medium',
-    question: 'A ball is thrown straight up at 20 m/s. How long does it take to return to the thrower\'s hand? (g = 9.8 m/s²)',
-    answer: 4.08, tolerance: 0.15, unit: 's',
-    hints: ['Time to reach peak = v₀/g. Total time = 2× that.', 't_peak = 20/9.8 ≈ 2.04 s → total = 2 × 2.04'],
-    solution: 't = 2v₀/g = 2 × 20 / 9.8 ≈ <span class="sol-val">4.08 s</span>'
+    id: '#002', title: 'The Drifting Satellite', topic: 'Circular Motion + Gravitation', difficulty: 'Hard',
+    teaser: '"One tiny thruster pulse changed everything..."',
+    story: 'A low-orbit satellite began drifting from its expected path after a correction burn. Ground control logged speed and orbital radius data, but the final telemetry indicates the craft underperformed. Determine the missing dynamics that explain the drift.',
+    given: [{k:'Satellite mass',v:'1200 kg'},{k:'Orbital speed target',v:'7600 m/s'},{k:'Actual speed after burn',v:'7300 m/s'},{k:'Orbit radius',v:'6.8 × 10^6 m'}],
+    steps: [
+      {title:'Step 1: Required Centripetal Acceleration', prompt:'Using the target speed, what centripetal acceleration was required?', unit:'m/s²', answer:8.49, tolerance:0.25, hints:['Use a_c = v²/r.','a_c = 7600² / (6.8e6)'], ok:'That acceleration is what the mission software expected.', fail:'Apply centripetal acceleration formula with target speed.', solTitle:'Step 1 — Target a_c', solBody:'a_c = v²/r = 7600² / 6.8e6 ≈ <strong style="color:var(--accent)">8.49 m/s²</strong>'},
+      {title:'Step 2: Actual Centripetal Force', prompt:'Using actual speed, what centripetal force acted on the 1200 kg craft?', unit:'N', answer:9.40e3, tolerance:220, hints:['First find actual a_c = v²/r, then F = ma.','a_c(actual)=7300²/(6.8e6) ≈ 7.83 m/s²'], ok:'Yes. The force was lower than target, so orbit shifted.', fail:'Compute with actual speed, then multiply by mass.', solTitle:'Step 2 — Actual Force', solBody:'a_c = 7300²/6.8e6 ≈ 7.83 m/s², so F = ma = 1200(7.83) ≈ <strong style="color:var(--accent)">9.40 × 10³ N</strong>'},
+      {title:'Step 3: Percent Shortfall in a_c', prompt:'What percent below target was the actual centripetal acceleration?', unit:'%', answer:7.77, tolerance:0.4, hints:['Percent shortfall = (target - actual)/target × 100.','Use 8.49 and 7.83 from steps 1 and 2.'], ok:'Exactly. A small speed miss created a major orbital effect.', fail:'Compare actual to target as a percent of target.', solTitle:'Step 3 — Percent Difference', solBody:'((8.49-7.83)/8.49)×100 ≈ <strong style="color:var(--accent)">7.77%</strong> shortfall'}
+    ],
+    concepts: ['Uniform circular motion','Centripetal force','Orbital stability','Error propagation']
   },
   {
-    id: 'p3', topic: 'forces', title: 'Newton\'s Second Law',
-    difficulty: 'Easy',
-    question: 'A 50 kg box sits on a frictionless surface. A net force of 200 N is applied. What is the acceleration of the box?',
-    answer: 4, tolerance: 0.1, unit: 'm/s²',
-    hints: ['F = ma → a = F/m', 'a = 200 / 50 = ?'],
-    solution: 'a = F/m = 200 / 50 = <span class="sol-val">4 m/s²</span>'
+    id: '#003', title: 'The Failed Rocket Launch', topic: 'Energy', difficulty: 'Medium',
+    teaser: '"A collision leaves engineers confused..."',
+    story: 'During a controlled test launch, a prototype rocket with a mass of 200 kg was fired straight upward with an initial velocity of 80 m/s. Pre-launch simulation predicted a higher altitude, but telemetry showed only 280 m. Engineers suspect energy loss in flight.',
+    given: [{k:'Mass (m)',v:'200 kg'},{k:'Initial velocity (v0)',v:'80 m/s'},{k:'Actual height',v:'280 m'},{k:'g',v:'9.8 m/s²'}],
+    steps: [
+      {title:'Step 1: Predicted Height', prompt:'If no energy was lost, what maximum height should the rocket have reached?', unit:'m', answer:326.5, tolerance:5, hints:['Set KE = PE at max height.','h = v²/(2g) with v = 80.'], ok:'Correct. Ideal height is 326.5 m.', fail:'Use conservation of mechanical energy.', solTitle:'Step 1 — Predicted Height', solBody:'h = v²/(2g) = 80²/(19.6) ≈ <strong style="color:var(--accent)">326.5 m</strong>'},
+      {title:'Step 2: Energy Lost', prompt:'How many joules were lost relative to ideal conversion?', unit:'J', answer:91200, tolerance:2000, hints:['Compute initial KE then actual PE.','Lost = KE_initial - PE_actual'], ok:'Yes. About 9.12 × 10⁴ J were dissipated.', fail:'Find both energies, then subtract.', solTitle:'Step 2 — Lost Energy', solBody:'KE_i = 640,000 J and PE_actual = 548,800 J, so loss = <strong style="color:var(--accent)">91,200 J</strong>'},
+      {title:'Step 3: Percentage Lost', prompt:'What percent of initial kinetic energy was lost?', unit:'%', answer:14.25, tolerance:0.8, hints:['% loss = loss/initial × 100','Use 91,200 J and 640,000 J.'], ok:'Exactly. Roughly 14.25% was lost.', fail:'Convert the ratio to a percent.', solTitle:'Step 3 — Percent Loss', solBody:'(91,200 / 640,000) × 100 ≈ <strong style="color:var(--accent)">14.25%</strong>'}
+    ],
+    concepts: ['Conservation of energy','Kinetic and potential energy','Non-conservative work','Efficiency']
   },
   {
-    id: 'p4', topic: 'forces', title: 'Weight on Incline',
-    difficulty: 'Medium',
-    question: 'A 10 kg block rests on a frictionless incline at 30°. What is the component of gravity pulling it down the slope? (g = 9.8 m/s²)',
-    answer: 49, tolerance: 1, unit: 'N',
-    hints: ['The component along the slope = mg × sin(θ)', 'F = 10 × 9.8 × sin(30°) = 10 × 9.8 × 0.5'],
-    solution: 'F = mg sinθ = 10 × 9.8 × sin(30°) = 10 × 9.8 × 0.5 = <span class="sol-val">49 N</span>'
+    id: '#004', title: 'The Silent Airbag', topic: 'Momentum + Impulse', difficulty: 'Very Hard',
+    teaser: '"The crash test looked safe, until the data packet arrived..."',
+    story: 'A crash-test cart struck a barrier and the airbag deployed late. Engineers need to estimate how much impulse the delayed deployment failed to deliver, using momentum data from the final run.',
+    given: [{k:'Cart mass',v:'950 kg'},{k:'Speed before impact',v:'18 m/s'},{k:'Speed after rebound',v:'-2 m/s'},{k:'Contact time',v:'0.12 s'}],
+    steps: [
+      {title:'Step 1: Change in Momentum', prompt:'What was the cart\'s change in momentum during impact?', unit:'kg·m/s', answer:-19000, tolerance:450, hints:['Δp = m(vf - vi).','Use vf = -2 m/s and vi = 18 m/s.'], ok:'Right. Momentum changed by about -1.90×10⁴ kg·m/s.', fail:'Use sign carefully in vf - vi.', solTitle:'Step 1 — Momentum Change', solBody:'Δp = 950(-2 - 18) = <strong style="color:var(--accent)">-19,000 kg·m/s</strong>'},
+      {title:'Step 2: Average Force Magnitude', prompt:'What average force magnitude acted during the 0.12 s contact?', unit:'N', answer:1.58e5, tolerance:4500, hints:['Impulse-momentum: F_avg = Δp/Δt.','Use magnitude for force.'], ok:'Correct. Peak loads are consistent with severe deceleration.', fail:'Divide momentum change by contact time.', solTitle:'Step 2 — Average Force', solBody:'|F_avg| = |Δp|/Δt = 19,000/0.12 ≈ <strong style="color:var(--accent)">1.58 × 10⁵ N</strong>'},
+      {title:'Step 3: Deceleration in g\'s', prompt:'What is the average deceleration magnitude in units of g?', unit:'g', answer:16.96, tolerance:0.7, hints:['a = F/m then divide by 9.8.','Use your force from step 2.'], ok:'Yes. Roughly 17 g average deceleration.', fail:'Convert force to acceleration, then to g-units.', solTitle:'Step 3 — g-loading', solBody:'a = F/m ≈ 1.58e5/950 ≈ 166.3 m/s², so a/g ≈ <strong style="color:var(--accent)">16.96 g</strong>'}
+    ],
+    concepts: ['Impulse-momentum theorem','Sign conventions','Crash safety physics','Average vs peak force']
   },
   {
-    id: 'p5', topic: 'energy', title: 'Free-Fall Speed',
-    difficulty: 'Easy',
-    question: 'A 5 kg ball is dropped from a height of 10 m. What is its speed just before hitting the ground? (ignore air resistance, g = 9.8 m/s²)',
-    answer: 14, tolerance: 0.3, unit: 'm/s',
-    hints: ['Use energy conservation: PE = KE → mgh = ½mv²', 'v = √(2gh) = √(2 × 9.8 × 10)'],
-    solution: 'v = √(2gh) = √(2 × 9.8 × 10) = √196 ≈ <span class="sol-val">14 m/s</span>'
-  },
-  {
-    id: 'p6', topic: 'energy', title: 'Spring Potential Energy',
-    difficulty: 'Medium',
-    question: 'A spring with a constant k = 400 N/m is compressed 0.2 m. How much potential energy is stored? (PE = ½kx²)',
-    answer: 8, tolerance: 0.2, unit: 'J',
-    hints: ['PE_spring = ½kx²', 'PE = ½ × 400 × 0.2² = ½ × 400 × 0.04'],
-    solution: 'PE = ½kx² = ½ × 400 × (0.2)² = ½ × 400 × 0.04 = <span class="sol-val">8 J</span>'
-  },
-  {
-    id: 'p7', topic: 'momentum', title: 'Inelastic Collision',
-    difficulty: 'Medium',
-    question: 'A 2 kg ball moving at 5 m/s collides and sticks to a 3 kg ball at rest. What is their combined velocity after the collision?',
-    answer: 2, tolerance: 0.1, unit: 'm/s',
-    hints: ['Conservation of momentum: p_before = p_after', 'm₁v₁ = (m₁ + m₂)v_f → v_f = m₁v₁ / (m₁ + m₂)'],
-    solution: 'v_f = m₁v₁ / (m₁+m₂) = (2 × 5) / (2+3) = 10/5 = <span class="sol-val">2 m/s</span>'
-  },
-  {
-    id: 'p8', topic: 'momentum', title: 'Impulse',
-    difficulty: 'Easy',
-    question: 'A force of 30 N is applied to a 3 kg object for 4 seconds. What is the change in momentum (impulse)?',
-    answer: 120, tolerance: 2, unit: 'kg·m/s',
-    hints: ['Impulse = F × t', 'J = 30 × 4 = ?'],
-    solution: 'J = F × Δt = 30 × 4 = <span class="sol-val">120 kg·m/s</span>'
+    id: '#005', title: 'The Unstable Bridge Cable', topic: 'Simple Harmonic Motion + Rotation', difficulty: 'Hard',
+    teaser: '"A periodic sway appears only at rush hour..."',
+    story: 'A suspension bridge inspection found periodic oscillations in one cable while a maintenance wheel assembly slowly rotated under load. Investigators need a rapid SHM and torque analysis before reopening traffic.',
+    given: [{k:'Cable amplitude',v:'0.25 m'},{k:'Oscillation period',v:'2.4 s'},{k:'Wheel radius',v:'0.40 m'},{k:'Tangential force on wheel',v:'320 N'}],
+    steps: [
+      {title:'Step 1: Angular Frequency', prompt:'What is the cable\'s angular frequency?', unit:'rad/s', answer:2.618, tolerance:0.08, hints:['For SHM, ω = 2π/T.','T = 2.4 s.'], ok:'Great. The oscillation rate is about 2.62 rad/s.', fail:'Use omega equals 2 pi over period.', solTitle:'Step 1 — Angular Frequency', solBody:'ω = 2π/T = 2π/2.4 ≈ <strong style="color:var(--accent)">2.62 rad/s</strong>'},
+      {title:'Step 2: Maximum Speed in SHM', prompt:'What is the cable segment\'s maximum speed?', unit:'m/s', answer:0.654, tolerance:0.03, hints:['v_max = Aω for SHM.','Use A = 0.25 m and ω from step 1.'], ok:'Correct. Maximum speed is about 0.65 m/s.', fail:'Multiply amplitude by angular frequency.', solTitle:'Step 2 — SHM Speed', solBody:'v_max = Aω = 0.25(2.618) ≈ <strong style="color:var(--accent)">0.654 m/s</strong>'},
+      {title:'Step 3: Wheel Torque', prompt:'What torque does the 320 N tangential force apply to the 0.40 m wheel?', unit:'N·m', answer:128, tolerance:3, hints:['Torque magnitude τ = rF for tangential force.','r = 0.40 m, F = 320 N.'], ok:'Yes. Torque is 128 N·m.', fail:'For tangential force, multiply radius and force.', solTitle:'Step 3 — Torque', solBody:'τ = rF = 0.40 × 320 = <strong style="color:var(--accent)">128 N·m</strong>'}
+    ],
+    concepts: ['Simple harmonic motion','Angular frequency','Maximum SHM speed','Torque']
   }
 ];
 
-// ─── STATE ───────────────────────────────────────────────────
+const PRACTICE = [
+  {id:'q1',topic:'kinematics',difficulty:'Easy',title:'Velocity From Graph',question:'A cart\'s velocity increases linearly from 2 m/s to 8 m/s over 3 s. What is its acceleration?',unit:'m/s²',answer:2,tolerance:0.1,hints:['a = delta v / delta t','(8-2)/3'],solution:'a = (8-2)/3 = <span class="sol-val">2.0 m/s²</span>'},
+  {id:'q2',topic:'kinematics',difficulty:'Medium',title:'Free-Fall Time',question:'Dropped from rest, how long does an object take to fall 45 m? (g = 9.8 m/s²)',unit:'s',answer:3.03,tolerance:0.1,hints:['Use x = 1/2 gt^2','t = sqrt(2x/g)'],solution:'t = sqrt(2*45/9.8) = <span class="sol-val">3.03 s</span>'},
+  {id:'q3',topic:'kinematics',difficulty:'Hard',title:'Projectile Range',question:'A ball launches at 20 m/s at 30°. Ignore air resistance. What is horizontal range?',unit:'m',answer:35.3,tolerance:1.2,hints:['R = v^2 sin(2theta)/g','sin 60° = 0.866'],solution:'R = 20²sin60/9.8 ≈ <span class="sol-val">35.3 m</span>'},
+  {id:'q4',topic:'forces',difficulty:'Easy',title:'Net Force',question:'A 12 kg sled accelerates at 1.5 m/s². What net force acts on it?',unit:'N',answer:18,tolerance:0.8,hints:['F = ma','12*1.5'],solution:'F = 12(1.5) = <span class="sol-val">18 N</span>'},
+  {id:'q5',topic:'forces',difficulty:'Medium',title:'Friction on Level Surface',question:'A 20 kg crate slides at constant speed while pushed with 70 N. What is kinetic friction magnitude?',unit:'N',answer:70,tolerance:2,hints:['Constant speed means a=0','Net force must be zero'],solution:'F_friction balances push: <span class="sol-val">70 N</span>'},
+  {id:'q6',topic:'forces',difficulty:'Very Hard',title:'Atwood Acceleration',question:'Masses 4 kg and 6 kg connected over ideal pulley. Find system acceleration.',unit:'m/s²',answer:1.96,tolerance:0.1,hints:['a=(m2-m1)g/(m1+m2)','Use 6 and 4 kg'],solution:'a=(6-4)9.8/(10)= <span class="sol-val">1.96 m/s²</span>'},
+  {id:'q7',topic:'circular',difficulty:'Easy',title:'Centripetal Acceleration',question:'A 2.0 kg mass moves in circle of radius 0.5 m at 3 m/s. What is centripetal acceleration?',unit:'m/s²',answer:18,tolerance:0.7,hints:['a=v^2/r','3^2/0.5'],solution:'a=9/0.5 = <span class="sol-val">18 m/s²</span>'},
+  {id:'q8',topic:'circular',difficulty:'Medium',title:'Centripetal Force',question:'A 1.5 kg mass moves at 6 m/s in circle radius 2 m. Find centripetal force.',unit:'N',answer:27,tolerance:1.2,hints:['F=mv^2/r','1.5*36/2'],solution:'F=1.5*36/2 = <span class="sol-val">27 N</span>'},
+  {id:'q9',topic:'circular',difficulty:'Hard',title:'Gravitational Field Strength',question:'Planet mass is 4.0×10^24 kg and radius is 5.0×10^6 m. Approximate g at surface. (G=6.67×10^-11)',unit:'m/s²',answer:10.67,tolerance:0.6,hints:['g=GM/r^2','Substitute scientific notation carefully'],solution:'g=6.67e-11*4e24/(5e6)^2 ≈ <span class="sol-val">10.67 m/s²</span>'},
+  {id:'q10',topic:'energy',difficulty:'Easy',title:'Work by Constant Force',question:'A 25 N force pushes an object 4.0 m in same direction. Work done?',unit:'J',answer:100,tolerance:3,hints:['W=Fd cos(theta)','theta=0'],solution:'W=25*4 = <span class="sol-val">100 J</span>'},
+  {id:'q11',topic:'energy',difficulty:'Medium',title:'Spring Compression',question:'k=300 N/m spring compressed 0.15 m. Spring potential energy?',unit:'J',answer:3.375,tolerance:0.2,hints:['Us=1/2 kx^2','x^2=0.0225'],solution:'Us=0.5*300*0.0225= <span class="sol-val">3.38 J</span>'},
+  {id:'q12',topic:'energy',difficulty:'Very Hard',title:'Power Requirement',question:'A 1400 kg elevator rises 18 m in 12 s at constant speed. Minimum motor power?',unit:'W',answer:20580,tolerance:500,hints:['P=Work/time','Work against gravity mgh'],solution:'P=(1400*9.8*18)/12 = <span class="sol-val">2.06×10^4 W</span>'},
+  {id:'q13',topic:'momentum',difficulty:'Easy',title:'Impulse',question:'A 40 N force acts for 0.30 s. What impulse is delivered?',unit:'N·s',answer:12,tolerance:0.6,hints:['J=F delta t','40*0.30'],solution:'J=40*0.30 = <span class="sol-val">12 N·s</span>'},
+  {id:'q14',topic:'momentum',difficulty:'Medium',title:'Elastic Head-On',question:'A 1 kg cart at 4 m/s elastically collides head-on with identical cart at rest. Final speed of first cart?',unit:'m/s',answer:0,tolerance:0.1,hints:['Identical masses exchange velocities in 1D elastic collisions','First cart gives speed to second'],solution:'First cart stops: <span class="sol-val">0 m/s</span>'},
+  {id:'q15',topic:'momentum',difficulty:'Hard',title:'Recoil Speed',question:'A 0.010 kg bullet exits a 2.0 kg launcher at 300 m/s. Launcher recoil speed?',unit:'m/s',answer:1.5,tolerance:0.1,hints:['Momentum conserved; initial total is zero','m_b v_b = m_L v_L'],solution:'v_L=(0.01*300)/2.0 = <span class="sol-val">1.5 m/s</span> backward'},
+  {id:'q16',topic:'shm',difficulty:'Easy',title:'Period from Frequency',question:'A mass-spring oscillator has frequency 2.5 Hz. What is period?',unit:'s',answer:0.4,tolerance:0.03,hints:['T=1/f','1/2.5'],solution:'T=1/2.5 = <span class="sol-val">0.40 s</span>'},
+  {id:'q17',topic:'shm',difficulty:'Medium',title:'Max Acceleration',question:'In SHM, A=0.08 m and omega=5 rad/s. What is maximum acceleration?',unit:'m/s²',answer:2,tolerance:0.1,hints:['a_max = omega^2 A','25*0.08'],solution:'a_max=25*0.08 = <span class="sol-val">2.0 m/s²</span>'},
+  {id:'q18',topic:'shm',difficulty:'Very Hard',title:'Speed at Displacement',question:'For SHM with A=0.20 m and omega=4 rad/s, speed at x=0.10 m?',unit:'m/s',answer:0.693,tolerance:0.05,hints:['v=omega*sqrt(A^2-x^2)','sqrt(0.04-0.01)'],solution:'v=4*sqrt(0.03)= <span class="sol-val">0.693 m/s</span>'},
+  {id:'q19',topic:'rotation',difficulty:'Easy',title:'Torque Magnitude',question:'A 15 N force is applied perpendicular to a wrench 0.30 m from pivot. Torque?',unit:'N·m',answer:4.5,tolerance:0.2,hints:['tau = rF sin(theta)','theta=90 so sin=1'],solution:'tau=0.30*15 = <span class="sol-val">4.5 N·m</span>'},
+  {id:'q20',topic:'rotation',difficulty:'Medium',title:'Angular Acceleration',question:'Net torque on disk is 12 N·m and moment of inertia is 3 kg·m². Angular acceleration?',unit:'rad/s²',answer:4,tolerance:0.15,hints:['tau = I alpha','alpha=tau/I'],solution:'alpha=12/3 = <span class="sol-val">4.0 rad/s²</span>'},
+  {id:'q21',topic:'rotation',difficulty:'Hard',title:'Rotational KE',question:'Wheel with I=2.5 kg·m² spins at 8 rad/s. Rotational kinetic energy?',unit:'J',answer:80,tolerance:2,hints:['K=1/2 I omega^2','omega^2=64'],solution:'K=0.5*2.5*64 = <span class="sol-val">80 J</span>'},
+  {id:'c1',topic:'kinematics',difficulty:'Easy',kind:'conceptual',title:'Area Under v-t',question:'What does the area under a velocity-time graph represent?',choices:['Acceleration','Displacement','Force','Jerk'],answerIndex:1,hints:['Think units: (m/s)*s = m'],solution:'Area under v-t gives <span class="sol-val">displacement</span>.'},
+  {id:'c2',topic:'kinematics',difficulty:'Medium',kind:'conceptual',title:'Negative Slope',question:'A position-time graph has a negative slope. Which is true?',choices:['Object speeds up','Velocity is negative','Acceleration is zero always','Object is at rest'],answerIndex:1,hints:['Slope of x-t is velocity'],solution:'Negative slope means <span class="sol-val">negative velocity</span>.'},
+  {id:'c3',topic:'forces',difficulty:'Easy',kind:'conceptual',title:'Action-Reaction',question:'In Newton\'s third law pairs, the two forces act on:',choices:['The same object','Different objects','Only moving objects','Only contact situations'],answerIndex:1,hints:['Forces come in pairs on different bodies'],solution:'Third-law forces act on <span class="sol-val">different objects</span>.'},
+  {id:'c4',topic:'forces',difficulty:'Hard',kind:'conceptual',title:'Free-Body Diagrams',question:'For a box sliding at constant velocity, which statement is correct?',choices:['Net force forward','Net force backward','Net force zero','No forces act'],answerIndex:2,hints:['Constant velocity means zero acceleration'],solution:'Constant velocity implies <span class="sol-val">net force is zero</span>.'},
+  {id:'c5',topic:'circular',difficulty:'Medium',kind:'conceptual',title:'Direction of a_c',question:'In uniform circular motion, centripetal acceleration points:',choices:['Tangentially forward','Tangentially backward','Toward center','Away from center'],answerIndex:2,hints:['It changes direction of velocity'],solution:'Centripetal acceleration points <span class="sol-val">toward the center</span>.'},
+  {id:'c6',topic:'circular',difficulty:'Hard',kind:'conceptual',title:'Orbit Speed Change',question:'If orbital speed is slightly too low for a circular orbit at that radius, the object will:',choices:['Fly outward immediately','Drop into an elliptical path','Stay circular anyway','Stop moving'],answerIndex:1,hints:['Circular orbit requires exact speed for radius'],solution:'It enters an <span class="sol-val">elliptical orbit</span>.'},
+  {id:'c7',topic:'energy',difficulty:'Easy',kind:'conceptual',title:'Conservative Forces',question:'Which force is conservative in AP Physics 1 models?',choices:['Kinetic friction','Air drag','Gravity','Applied push'],answerIndex:2,hints:['Work depends only on endpoints'],solution:'In this course, <span class="sol-val">gravity</span> is conservative.'},
+  {id:'c8',topic:'energy',difficulty:'Very Hard',kind:'conceptual',title:'System Boundary',question:'Why does choosing a system boundary matter in energy analysis?',choices:['It changes g','It decides which transfers are external','It changes mass value','It removes momentum'],answerIndex:1,hints:['External work/transfer depends on what is inside'],solution:'System choice determines <span class="sol-val">which energy transfers are external</span>.'},
+  {id:'c9',topic:'momentum',difficulty:'Medium',kind:'conceptual',title:'Impulse Graph',question:'Impulse from a force-time graph is:',choices:['Slope under curve','Area under curve','Peak value only','Average force only'],answerIndex:1,hints:['Units N*s'],solution:'Impulse equals <span class="sol-val">area under F-t graph</span>.'},
+  {id:'c10',topic:'momentum',difficulty:'Hard',kind:'conceptual',title:'Elastic vs Inelastic',question:'In perfectly inelastic collisions, which quantity is conserved?',choices:['Kinetic energy only','Momentum only','Both KE and momentum','Neither'],answerIndex:1,hints:['Objects stick together'],solution:'Only <span class="sol-val">momentum</span> is guaranteed conserved.'},
+  {id:'c11',topic:'shm',difficulty:'Easy',kind:'conceptual',title:'Restoring Force',question:'In SHM near equilibrium, restoring force direction is:',choices:['Away from equilibrium','Toward equilibrium','Always upward','Always zero'],answerIndex:1,hints:['Restoring means it brings system back'],solution:'Restoring force points <span class="sol-val">toward equilibrium</span>.'},
+  {id:'c12',topic:'shm',difficulty:'Medium',kind:'conceptual',title:'At Equilibrium',question:'At x = 0 in ideal SHM, magnitude of speed is typically:',choices:['Maximum','Minimum','Zero always','Undefined'],answerIndex:0,hints:['Energy is mostly kinetic at center'],solution:'At equilibrium, speed magnitude is <span class="sol-val">maximum</span>.'},
+  {id:'c13',topic:'rotation',difficulty:'Medium',kind:'conceptual',title:'Moment Arm',question:'Increasing the lever arm while keeping force fixed does what to torque?',choices:['Decreases torque','No change','Increases torque','Makes torque zero'],answerIndex:2,hints:['tau = rF sin(theta)'],solution:'Larger lever arm gives <span class="sol-val">larger torque</span>.'},
+  {id:'c14',topic:'rotation',difficulty:'Very Hard',kind:'conceptual',title:'Rotational Inertia',question:'Two disks have same mass; one has more mass near rim. Compared to other, its I is:',choices:['Smaller','Same','Larger','Cannot tell'],answerIndex:2,hints:['I depends on r^2 distribution'],solution:'More mass at larger radius means <span class="sol-val">larger moment of inertia</span>.'}
+];
+
 let timerInterval = null;
 let timerSeconds = 0;
 let caseStarted = false;
+let currentCase = null;
 let currentStep = 1;
 let stepsDone = [false, false, false];
-let hintShown = [0, 0, 0]; // hint index per step
+let hintShown = [0, 0, 0];
 let wrongAttempts = [0, 0, 0];
 let practiceFilter = 'all';
 let currentPractice = null;
 let pHintIndex = 0;
+let selectedChoice = null;
 
-// Load from localStorage
-let profile = JSON.parse(localStorage.getItem('pc_profile') || '{"solved":0,"streak":0,"times":[],"accuracies":[],"history":[]}');
+const profileFallback = '{"solved":0,"streak":0,"times":[],"accuracies":[],"history":[]}';
+let profile = JSON.parse(localStorage.getItem(PERSIST_KEY) || localStorage.getItem('pc_profile') || profileFallback);
 
-// ─── NAVIGATION ──────────────────────────────────────────────
 function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-link, .nav-profile-btn').forEach(b => b.classList.remove('active'));
@@ -926,13 +949,113 @@ function showPage(name) {
   const nl = document.getElementById('nl-' + name);
   if (nl) nl.classList.add('active');
   if (name === 'profile') updateProfilePage();
-  if (name === 'practice') renderPracticeList();
+  if (name === 'practice') renderPracticeLists();
+  if (name === 'archive') renderArchiveList();
   window.scrollTo(0, 0);
 }
 
-// ─── TIMER ───────────────────────────────────────────────────
+function dayOfYear(d) {
+  const start = new Date(d.getFullYear(), 0, 0);
+  const diff = d - start;
+  return Math.floor(diff / 86400000);
+}
+
+function getCaseForDate(d) {
+  const idx = (dayOfYear(d) - 1) % CASE_BANK.length;
+  return CASE_BANK[idx < 0 ? 0 : idx];
+}
+
+function setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+
+function renderHomeFromCases(todayCase, tomorrowCase) {
+  setText('home-case-num', `🧩 Case ${todayCase.id}`);
+  setText('home-case-topic', todayCase.topic);
+  setText('home-case-title', todayCase.title);
+  setText('home-case-excerpt', todayCase.story);
+  setText('tomorrow-topic', `Topic: ${tomorrowCase.topic}`);
+  setText('tomorrow-tease', tomorrowCase.teaser);
+}
+
+function resetCaseProgress() {
+  stopTimer();
+  timerSeconds = 0;
+  caseStarted = false;
+  currentStep = 1;
+  stepsDone = [false, false, false];
+  hintShown = [0, 0, 0];
+  wrongAttempts = [0, 0, 0];
+  document.getElementById('timer-val').textContent = '00:00';
+  document.getElementById('case-locked').style.display = 'block';
+  document.getElementById('case-content').style.display = 'none';
+  document.getElementById('start-btn').style.display = 'inline-flex';
+  document.getElementById('completion-card').style.display = 'none';
+  document.getElementById('steps-sidebar').style.display = 'block';
+  document.getElementById('solution-section').style.display = 'none';
+  document.getElementById('show-solution-btn').textContent = '📚 View Full Solution';
+
+  [1, 2, 3].forEach(i => {
+    const input = document.getElementById(`ans-${i}`);
+    input.value = '';
+    input.className = 'input';
+    const fb = document.getElementById(`fb-${i}`);
+    fb.className = 'feedback-box';
+    fb.innerHTML = '';
+    document.getElementById(`hints-${i}`).querySelectorAll('.hint-item').forEach(h => h.classList.remove('show'));
+    const hb = document.getElementById(`hint-btn-${i}`);
+    hb.textContent = '💡 Show Hint (1/2)';
+    const snb = document.getElementById(`snb-${i}`);
+    snb.className = 'step-nav-btn';
+    snb.textContent = `Step ${i}`;
+    if (i > 1) snb.classList.add('locked');
+  });
+  document.getElementById('snb-1').classList.add('active');
+  goToStep(1);
+}
+
+function loadCaseById(caseId) {
+  const found = CASE_BANK.find(c => c.id === caseId);
+  if (!found) return;
+  currentCase = found;
+  resetCaseProgress();
+
+  setText('case-header-title', `Case ${found.id}: ${found.title}`);
+  setText('case-header-meta', `${found.topic} · 3 Steps · ${found.difficulty}`);
+  setText('case-story', found.story);
+  setText('comp-sub', `You solved ${found.title}.`);
+
+  document.getElementById('given-list').innerHTML = found.given
+    .map(g => `<div class="given-item"><span class="given-key">${g.k}</span><span class="given-val">${g.v}</span></div>`).join('');
+  document.getElementById('concepts-list').innerHTML = found.concepts
+    .map(c => `<span class="concept-tag">${c}</span>`).join('');
+
+  found.steps.forEach((s, idx) => {
+    const i = idx + 1;
+    setText(`step-title-${i}`, s.title);
+    setText(`step-prompt-${i}`, s.prompt);
+    setText(`ans-${i}-unit`, s.unit);
+    setText(`hint-${i}-1-text`, s.hints[0]);
+    setText(`hint-${i}-2-text`, s.hints[1]);
+    setText(`sol-step-title-${i}`, s.solTitle);
+    document.getElementById(`sol-step-body-${i}`).innerHTML = s.solBody;
+  });
+}
+
+function openCaseFromArchive(caseId) {
+  loadCaseById(caseId);
+  showPage('case');
+}
+
+function redoCurrentCase() {
+  if (!currentCase) return;
+  loadCaseById(currentCase.id);
+  showToast('Case reset. Ready for a fresh attempt.');
+}
+
 function startCase() {
-  if (caseStarted) return;
+  if (caseStarted || !currentCase) return;
   caseStarted = true;
   document.getElementById('case-locked').style.display = 'none';
   document.getElementById('case-content').style.display = 'block';
@@ -955,28 +1078,21 @@ function stopTimer() {
   document.getElementById('timer-dot').classList.remove('running');
 }
 
-// ─── STEP LOGIC ───────────────────────────────────────────────
-const ANSWERS = [326.5, 91200, 14.25];
-const TOLERANCES = [5, 2000, 0.8]; // ±
-const FEEDBACK = [
-  { ok: 'Using KE = PE → ½mv² = mgh, we get h = v²/(2g) = 80²/(19.6) = 326.5 m. Without any energy loss, the rocket should have reached this height.', fail: 'Set kinetic energy equal to potential energy at the peak: ½mv² = mgh, then solve for h.' },
-  { ok: 'Initial KE = ½(200)(80²) = 640,000 J. PE at 280 m = 200 × 9.8 × 280 = 548,800 J. The difference (91,200 J) was lost to drag and heat.', fail: 'Calculate initial KE = ½mv², then PE at 280 m = mgh. The difference is the lost energy.' },
-  { ok: '(91,200 / 640,000) × 100 = 14.25%. About 14% of the rocket\'s energy was consumed by air resistance and heat — a significant loss for a short flight.', fail: 'Divide the energy lost (from Step 2) by the initial kinetic energy (640,000 J), then multiply by 100.' }
-];
-
 function checkStep(n) {
-  if (!caseStarted) return;
+  if (!caseStarted || !currentCase) return;
+  const step = currentCase.steps[n - 1];
   const val = parseFloat(document.getElementById('ans-' + n).value);
   if (isNaN(val)) { showToast('Enter a number first'); return; }
-  const correct = Math.abs(val - ANSWERS[n-1]) <= TOLERANCES[n-1];
+  const correct = Math.abs(val - step.answer) <= step.tolerance;
   const fb = document.getElementById('fb-' + n);
   const inp = document.getElementById('ans-' + n);
 
   if (correct) {
-    inp.classList.add('correct'); inp.classList.remove('wrong');
+    inp.classList.add('correct');
+    inp.classList.remove('wrong');
     fb.className = 'feedback-box correct';
-    fb.innerHTML = `<span class="feedback-icon">✅</span> Correct! <div class="feedback-explanation">${FEEDBACK[n-1].ok}</div>`;
-    stepsDone[n-1] = true;
+    fb.innerHTML = `<span class="feedback-icon">✅</span> Correct! <div class="feedback-explanation">${step.ok}</div>`;
+    stepsDone[n - 1] = true;
     markStepDone(n);
     setTimeout(() => {
       if (n < 3) {
@@ -985,31 +1101,31 @@ function checkStep(n) {
       } else {
         completeCase();
       }
-    }, 1400);
+    }, 1000);
   } else {
-    inp.classList.add('wrong'); inp.classList.remove('correct');
-    wrongAttempts[n-1]++;
+    inp.classList.add('wrong');
+    inp.classList.remove('correct');
+    wrongAttempts[n - 1]++;
     fb.className = 'feedback-box wrong';
-    fb.innerHTML = `<span class="feedback-icon">❌</span> Not quite — try again. <div class="feedback-explanation">${FEEDBACK[n-1].fail}</div>`;
-    setTimeout(() => { inp.classList.remove('wrong'); }, 1200);
+    fb.innerHTML = `<span class="feedback-icon">❌</span> Not quite — try again. <div class="feedback-explanation">${step.fail}</div>`;
+    setTimeout(() => { inp.classList.remove('wrong'); }, 900);
   }
 }
 
 function markStepDone(n) {
   const btn = document.getElementById('snb-' + n);
-  btn.classList.add('done'); btn.classList.remove('active');
+  btn.classList.add('done');
+  btn.classList.remove('active');
   btn.innerHTML = `Step ${n}<span class="step-check">✓</span>`;
 }
 
 function unlockStep(n) {
-  const btn = document.getElementById('snb-' + n);
-  btn.classList.remove('locked');
+  document.getElementById('snb-' + n).classList.remove('locked');
 }
 
 function goToStep(n) {
-  [1,2,3].forEach(i => {
-    const el = document.getElementById('step-' + i);
-    if (el) el.style.display = (i === n) ? 'block' : 'none';
+  [1, 2, 3].forEach(i => {
+    document.getElementById('step-' + i).style.display = i === n ? 'block' : 'none';
     const btn = document.getElementById('snb-' + i);
     if (!btn.classList.contains('done') && !btn.classList.contains('locked')) {
       btn.classList.toggle('active', i === n);
@@ -1018,41 +1134,43 @@ function goToStep(n) {
   currentStep = n;
 }
 
-// ─── HINTS ───────────────────────────────────────────────────
 function showHint(step) {
-  const shown = hintShown[step-1];
+  const shown = hintShown[step - 1];
   if (shown >= 2) { showToast('All hints shown'); return; }
   const idx = shown + 1;
   document.getElementById(`hint-${step}-${idx}`).classList.add('show');
-  hintShown[step-1] = idx;
-  const btn = document.getElementById('hint-btn-' + step);
-  btn.textContent = idx === 2 ? '💡 All Hints Shown' : `💡 Show Hint (2/2)`;
+  hintShown[step - 1] = idx;
+  document.getElementById(`hint-btn-${step}`).textContent = idx === 2 ? '💡 All Hints Shown' : '💡 Show Hint (2/2)';
 }
 
-// ─── COMPLETION ───────────────────────────────────────────────
 function completeCase() {
   stopTimer();
-  const totalWrong = wrongAttempts.reduce((a,b) => a+b, 0);
-  const accuracy = `${3 - Math.min(totalWrong, 1)}/3`; // simplified display
+  const totalWrong = wrongAttempts.reduce((a, b) => a + b, 0);
+  const score = Math.max(0, 3 - Math.min(totalWrong, 3));
+  const accuracy = `${score}/3`;
   const timeStr = formatTime(timerSeconds);
 
   profile.solved++;
   profile.streak++;
   profile.times.push(timerSeconds);
-  profile.accuracies.push(Math.max(0, 3 - totalWrong));
-  profile.history.unshift({ case:'#003 – Failed Rocket', time: timeStr, acc: accuracy, date: new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'}) });
-  localStorage.setItem('pc_profile', JSON.stringify(profile));
+  profile.accuracies.push(score);
+  profile.history.unshift({
+    caseId: currentCase.id,
+    case: `${currentCase.id} – ${currentCase.title}`,
+    time: timeStr,
+    acc: accuracy,
+    date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  });
+  localStorage.setItem(PERSIST_KEY, JSON.stringify(profile));
 
-  document.getElementById('res-time').textContent = timeStr;
-  document.getElementById('res-acc').textContent = accuracy;
-  document.getElementById('res-streak').textContent = profile.streak;
-  document.getElementById('arc-003-status').textContent = '✅';
-  document.getElementById('arc-003-status').className = 'status-complete';
-
+  setText('res-time', timeStr);
+  setText('res-acc', accuracy);
+  setText('res-streak', profile.streak);
   document.getElementById('completion-card').style.display = 'block';
   document.getElementById('steps-sidebar').style.display = 'none';
-  document.getElementById('completion-card').scrollIntoView({ behavior:'smooth', block:'start' });
-  showToast('🎯 Case complete!');
+  document.getElementById('completion-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  renderArchiveList();
+  showToast('Case complete!');
 }
 
 function toggleSolution() {
@@ -1063,92 +1181,175 @@ function toggleSolution() {
   btn.textContent = show ? '📚 Hide Solution' : '📚 View Full Solution';
 }
 
-// ─── PRACTICE ────────────────────────────────────────────────
-function renderPracticeList() {
-  document.getElementById('practice-list').style.display = 'flex';
-  document.getElementById('practice-solve').classList.remove('active');
-  const list = document.getElementById('practice-list');
-  const items = practiceFilter === 'all' ? PRACTICE : PRACTICE.filter(p => p.topic === practiceFilter);
-  const diffColor = { Easy: 'badge-green', Medium: 'badge-yellow', Hard: 'badge-purple' };
-  list.innerHTML = items.map(p => `
-    <div class="practice-item" onclick="openPractice('${p.id}')">
-      <div class="practice-item-top">
-        <div class="practice-item-title">${p.title}</div>
-        <div class="practice-item-meta">
-          <span class="badge badge-blue" style="font-size:.68rem">${p.topic.charAt(0).toUpperCase()+p.topic.slice(1)}</span>
-          <span class="badge ${diffColor[p.difficulty]}" style="font-size:.68rem">${p.difficulty}</span>
-        </div>
-      </div>
-      <div class="practice-item-desc">${p.question.substring(0, 90)}…</div>
-    </div>
-  `).join('');
+function topicLabel(topic) {
+  return TOPIC_LABELS[topic] || topic;
 }
 
-function filterPractice(f, btn) {
-  practiceFilter = f;
+function renderArchiveList() {
+  const todayCase = getCaseForDate(new Date());
+  const list = document.getElementById('archive-list');
+  list.innerHTML = CASE_BANK.map(c => {
+    const solved = profile.history.some(h => h.caseId === c.id);
+    const status = solved ? '<span class="status-complete">✅</span>' : '<span class="status-open">⬜</span>';
+    const action = solved ? 'Redo →' : 'Solve →';
+    const todayBadge = c.id === todayCase.id ? '<span class="badge badge-yellow" style="font-size:.68rem">⚡ Today</span>' : '<span class="badge badge-muted" style="font-size:.68rem">Archive</span>';
+    return `
+      <div class="archive-card" onclick="openCaseFromArchive('${c.id}')">
+        <div class="archive-left">
+          <div class="archive-num">${c.id}</div>
+          <div>
+            <div class="archive-title">${c.title}</div>
+            <div class="archive-meta">
+              ${todayBadge}
+              <span>${c.topic}</span>
+              <span>·</span>
+              <span>${c.difficulty}</span>
+            </div>
+          </div>
+        </div>
+        <div class="archive-right">
+          ${status}
+          <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();openCaseFromArchive('${c.id}')">${action}</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function filterPractice(filter, btn) {
+  practiceFilter = filter;
   document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  renderPracticeList();
+  renderPracticeLists();
+}
+
+function renderPracticeLists() {
+  document.getElementById('practice-list').style.display = 'block';
+  document.getElementById('concept-list').style.display = 'block';
+  document.getElementById('practice-solve').classList.remove('active');
+
+  const filtered = PRACTICE.filter(p => practiceFilter === 'all' || p.topic === practiceFilter);
+  const quant = filtered.filter(p => p.kind !== 'conceptual');
+  const concept = filtered.filter(p => p.kind === 'conceptual');
+  document.getElementById('practice-list').innerHTML = renderGroupedPractice(quant);
+  document.getElementById('concept-list').innerHTML = renderGroupedPractice(concept);
+}
+
+function renderGroupedPractice(items) {
+  if (items.length === 0) {
+    return `<div class="card" style="font-size:.85rem;color:var(--muted)">No questions in this filter yet.</div>`;
+  }
+  const topics = Object.keys(TOPIC_LABELS).filter(t => items.some(i => i.topic === t));
+  return topics.map(topic => {
+    const topicItems = items.filter(i => i.topic === topic);
+    const byDiff = DIFF_ORDER.map(diff => ({ diff, items: topicItems.filter(i => i.difficulty === diff) }))
+      .filter(g => g.items.length > 0)
+      .map(g => `
+        <div class="practice-level">
+          <div class="practice-level-head">${g.diff}</div>
+          ${g.items.map(p => `
+            <div class="practice-item" onclick="openPractice('${p.id}')">
+              <div class="practice-item-top">
+                <div class="practice-item-title">${p.title}</div>
+                <div class="practice-item-meta">
+                  <span class="badge badge-blue" style="font-size:.68rem">${topicLabel(p.topic)}</span>
+                  <span class="badge ${DIFF_BADGE[p.difficulty]}" style="font-size:.68rem">${p.difficulty}</span>
+                </div>
+              </div>
+              <div class="practice-item-desc">${p.question}</div>
+            </div>`).join('')}
+        </div>`).join('');
+
+    return `<div class="practice-topic-group"><div class="practice-topic-title">${topicLabel(topic)}</div>${byDiff}</div>`;
+  }).join('');
 }
 
 function openPractice(id) {
   currentPractice = PRACTICE.find(p => p.id === id);
   pHintIndex = 0;
+  selectedChoice = null;
   if (!currentPractice) return;
-  const p = currentPractice;
-  const diffColor = { Easy: 'badge-green', Medium: 'badge-yellow', Hard: 'badge-purple' };
 
-  document.getElementById('psolve-label').textContent = p.topic.toUpperCase() + ' · PROBLEM';
-  document.getElementById('psolve-title').textContent = p.title;
-  document.getElementById('psolve-badges').innerHTML = `<span class="badge ${diffColor[p.difficulty]}">${p.difficulty}</span>`;
-  document.getElementById('psolve-q').textContent = p.question;
-  document.getElementById('psolve-unit').textContent = p.unit;
-  document.getElementById('psolve-unit-label').textContent = `Answer (${p.unit})`;
+  const p = currentPractice;
+  const isConcept = p.kind === 'conceptual';
+  setText('psolve-label', `${topicLabel(p.topic).toUpperCase()} · ${isConcept ? 'CONCEPTUAL' : 'AP STYLE'}`);
+  setText('psolve-title', p.title);
+  document.getElementById('psolve-badges').innerHTML = `<span class="badge ${DIFF_BADGE[p.difficulty]}">${p.difficulty}</span>`;
+  setText('psolve-q', p.question);
   document.getElementById('psolve-input').value = '';
   document.getElementById('psolve-input').className = 'input';
   document.getElementById('p-feedback').className = 'feedback-box';
+  document.getElementById('p-feedback').innerHTML = '';
   document.getElementById('p-hints').innerHTML = '';
   document.getElementById('p-solution').className = 'solution-reveal';
   document.getElementById('p-solution').innerHTML = '';
   document.getElementById('p-hint-btn').textContent = '💡 Hint';
 
+  const inputRow = document.getElementById('psolve-input-row');
+  const choicesBox = document.getElementById('psolve-choices');
+  if (isConcept) {
+    inputRow.style.display = 'none';
+    choicesBox.style.display = 'grid';
+    choicesBox.innerHTML = p.choices.map((c, idx) => `<button class="choice-btn" onclick="selectChoice(${idx}, this)">${String.fromCharCode(65 + idx)}. ${c}</button>`).join('');
+  } else {
+    inputRow.style.display = 'flex';
+    choicesBox.style.display = 'none';
+    choicesBox.innerHTML = '';
+    setText('psolve-unit', p.unit);
+    setText('psolve-unit-label', `Answer (${p.unit})`);
+  }
+
   document.getElementById('practice-list').style.display = 'none';
+  document.getElementById('concept-list').style.display = 'none';
   document.getElementById('practice-solve').classList.add('active');
   window.scrollTo(0, 0);
 }
 
+function selectChoice(idx, btn) {
+  selectedChoice = idx;
+  document.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
 function backToPracticeList() {
   document.getElementById('practice-solve').classList.remove('active');
-  document.getElementById('practice-list').style.display = 'flex';
+  renderPracticeLists();
 }
 
 function checkPractice() {
   if (!currentPractice) return;
-  const val = parseFloat(document.getElementById('psolve-input').value);
-  if (isNaN(val)) { showToast('Enter a number first'); return; }
-  const correct = Math.abs(val - currentPractice.answer) <= currentPractice.tolerance;
   const fb = document.getElementById('p-feedback');
-  const inp = document.getElementById('psolve-input');
-  if (correct) {
-    inp.classList.add('correct');
-    fb.className = 'feedback-box correct';
-    fb.innerHTML = `<span class="feedback-icon">✅</span> Correct! Well done.`;
+  const isConcept = currentPractice.kind === 'conceptual';
+  let correct = false;
+
+  if (isConcept) {
+    if (selectedChoice === null) { showToast('Choose an option first'); return; }
+    correct = selectedChoice === currentPractice.answerIndex;
   } else {
-    inp.classList.add('wrong');
+    const val = parseFloat(document.getElementById('psolve-input').value);
+    if (isNaN(val)) { showToast('Enter a number first'); return; }
+    correct = Math.abs(val - currentPractice.answer) <= currentPractice.tolerance;
+  }
+
+  if (correct) {
+    document.getElementById('psolve-input').classList.add('correct');
+    fb.className = 'feedback-box correct';
+    fb.innerHTML = `<span class="feedback-icon">✅</span> Correct!`;
+  } else {
+    document.getElementById('psolve-input').classList.add('wrong');
     fb.className = 'feedback-box wrong';
     fb.innerHTML = `<span class="feedback-icon">❌</span> Not quite — try again or use a hint.`;
-    setTimeout(() => { inp.classList.remove('wrong'); }, 1000);
+    setTimeout(() => { document.getElementById('psolve-input').classList.remove('wrong'); }, 900);
   }
 }
 
 function showPracticeHint() {
   if (!currentPractice) return;
-  const hints = currentPractice.hints;
+  const hints = currentPractice.hints || [];
   if (pHintIndex >= hints.length) { showToast('No more hints'); return; }
   const container = document.getElementById('p-hints');
   const div = document.createElement('div');
   div.className = 'hint-item show';
-  div.innerHTML = `<div class="hint-item-label">Hint ${pHintIndex+1}</div>${hints[pHintIndex]}`;
+  div.innerHTML = `<div class="hint-item-label">Hint ${pHintIndex + 1}</div>${hints[pHintIndex]}`;
   container.appendChild(div);
   pHintIndex++;
   document.getElementById('p-hint-btn').textContent = pHintIndex >= hints.length ? '💡 All Hints Shown' : '💡 Another Hint';
@@ -1161,19 +1362,18 @@ function showPracticeSolution() {
   s.classList.add('show');
 }
 
-// ─── PROFILE ─────────────────────────────────────────────────
 function updateProfilePage() {
-  document.getElementById('s-solved').textContent = profile.solved;
-  document.getElementById('s-streak').textContent = profile.streak;
+  setText('s-solved', String(profile.solved));
+  setText('s-streak', String(profile.streak));
   if (profile.times.length > 0) {
     const best = Math.min(...profile.times);
-    const avg = Math.round(profile.times.reduce((a,b)=>a+b,0)/profile.times.length);
-    document.getElementById('s-best').textContent = formatTime(best);
-    document.getElementById('s-avg').textContent = formatTime(avg);
+    const avg = Math.round(profile.times.reduce((a, b) => a + b, 0) / profile.times.length);
+    setText('s-best', formatTime(best));
+    setText('s-avg', formatTime(avg));
   }
   if (profile.accuracies.length > 0) {
-    const avg = Math.round(profile.accuracies.reduce((a,b)=>a+b,0)/profile.accuracies.length/3*100);
-    document.getElementById('s-acc').textContent = avg + '%';
+    const avg = Math.round(profile.accuracies.reduce((a, b) => a + b, 0) / profile.accuracies.length / 3 * 100);
+    setText('s-acc', avg + '%');
   }
   const tbody = document.getElementById('history-body');
   if (profile.history.length === 0) {
@@ -1185,12 +1385,10 @@ function updateProfilePage() {
         <td class="td-mono">${h.time}</td>
         <td><span class="badge badge-blue" style="font-size:.72rem">${h.acc}</span></td>
         <td style="color:var(--muted);font-size:.82rem">${h.date}</td>
-      </tr>
-    `).join('');
+      </tr>`).join('');
   }
 }
 
-// ─── TOAST ───────────────────────────────────────────────────
 let toastTimer;
 function showToast(msg) {
   const t = document.getElementById('toast');
@@ -1200,13 +1398,15 @@ function showToast(msg) {
   toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
 }
 
-// ─── INIT ────────────────────────────────────────────────────
-renderPracticeList();
-// Initialize archive status if already solved
-if (profile.history.some(h => h.case.includes('#003'))) {
-  const el = document.getElementById('arc-003-status');
-  if (el) { el.textContent = '✅'; el.className = 'status-complete'; }
-}
+const today = new Date();
+const tomorrow = new Date(today);
+tomorrow.setDate(today.getDate() + 1);
+const todayCase = getCaseForDate(today);
+const tomorrowCase = getCaseForDate(tomorrow);
+renderHomeFromCases(todayCase, tomorrowCase);
+loadCaseById(todayCase.id);
+renderArchiveList();
+renderPracticeLists();
 </script>
 </body>
 </html>
