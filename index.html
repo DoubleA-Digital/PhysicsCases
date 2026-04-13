@@ -717,14 +717,21 @@ input { font-family: var(--mono); }
     <p class="page-sub" style="margin-top:0;margin-bottom:18px;font-size:.84rem">Reference: <a href="https://apcentral.collegeboard.org/media/pdf/ap-physics-1-course-at-a-glance.pdf" target="_blank" rel="noopener" style="color:var(--accent)">AP Physics 1 Course at a Glance</a></p>
 
     <div class="practice-cats" id="practice-cats">
-      <button class="cat-pill active" onclick="filterPractice('all', this)">All</button>
-      <button class="cat-pill" onclick="filterPractice('kinematics', this)">Kinematics</button>
-      <button class="cat-pill" onclick="filterPractice('forces', this)">Forces</button>
-      <button class="cat-pill" onclick="filterPractice('circular', this)">Circular Motion + Gravitation</button>
-      <button class="cat-pill" onclick="filterPractice('energy', this)">Energy</button>
-      <button class="cat-pill" onclick="filterPractice('momentum', this)">Momentum</button>
-      <button class="cat-pill" onclick="filterPractice('shm', this)">Simple Harmonic Motion</button>
-      <button class="cat-pill" onclick="filterPractice('rotation', this)">Torque + Rotation</button>
+      <button class="cat-pill topic-pill active" onclick="filterPractice('all', this)">All</button>
+      <button class="cat-pill topic-pill" onclick="filterPractice('kinematics', this)">Kinematics</button>
+      <button class="cat-pill topic-pill" onclick="filterPractice('forces', this)">Forces</button>
+      <button class="cat-pill topic-pill" onclick="filterPractice('circular', this)">Circular Motion + Gravitation</button>
+      <button class="cat-pill topic-pill" onclick="filterPractice('energy', this)">Energy</button>
+      <button class="cat-pill topic-pill" onclick="filterPractice('momentum', this)">Momentum</button>
+      <button class="cat-pill topic-pill" onclick="filterPractice('shm', this)">Simple Harmonic Motion</button>
+      <button class="cat-pill topic-pill" onclick="filterPractice('rotation', this)">Torque + Rotation</button>
+    </div>
+    <div class="practice-cats" id="difficulty-toggles" style="margin-top:-12px;margin-bottom:18px">
+      <button class="cat-pill active diff-pill" data-diff="Easy" onclick="toggleDifficulty('Easy', this)">Easy</button>
+      <button class="cat-pill active diff-pill" data-diff="Medium" onclick="toggleDifficulty('Medium', this)">Medium</button>
+      <button class="cat-pill active diff-pill" data-diff="Hard" onclick="toggleDifficulty('Hard', this)">Hard</button>
+      <button class="cat-pill active diff-pill" data-diff="Very Hard" onclick="toggleDifficulty('Very Hard', this)">Very Hard</button>
+      <button class="btn btn-secondary btn-sm" onclick="refreshInfiniteQuestions()">Generate New Questions</button>
     </div>
 
     <p class="label" style="margin-top:4px">Quantitative Sets</p>
@@ -938,9 +945,215 @@ let practiceFilter = 'all';
 let currentPractice = null;
 let pHintIndex = 0;
 let selectedChoice = null;
+let renderedPractice = [];
+let renderedConceptual = [];
+let generatedCounter = 0;
+let difficultyFilters = { Easy: true, Medium: true, Hard: true, 'Very Hard': true };
 
 const profileFallback = '{"solved":0,"streak":0,"times":[],"accuracies":[],"history":[]}';
 let profile = JSON.parse(localStorage.getItem(PERSIST_KEY) || localStorage.getItem('pc_profile') || profileFallback);
+
+function randInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function randChoice(arr) {
+  return arr[randInt(0, arr.length - 1)];
+}
+
+function roundTo(num, places) {
+  const f = Math.pow(10, places);
+  return Math.round(num * f) / f;
+}
+
+function nextQuestionId(prefix) {
+  generatedCounter += 1;
+  return `${prefix}-${Date.now()}-${generatedCounter}`;
+}
+
+function generateQuantQuestion(topic, difficulty) {
+  if (topic === 'kinematics') {
+    if (difficulty === 'Easy') {
+      const v1 = randInt(4, 12), v2 = randInt(16, 30), t = randInt(2, 8);
+      const a = roundTo((v2 - v1) / t, 2);
+      return { id: nextQuestionId('qk'), topic, difficulty, title: 'Velocity Change', question: `An object speeds up from ${v1} m/s to ${v2} m/s in ${t} s. What is its acceleration?`, unit: 'm/s²', answer: a, tolerance: 0.2, hints: ['Use a = delta v / delta t.', `Compute (${v2} - ${v1}) / ${t}.`], solution: `a = (${v2}-${v1})/${t} = <span class="sol-val">${a} m/s²</span>` };
+    }
+    if (difficulty === 'Medium') {
+      const h = randInt(20, 90);
+      const t = roundTo(Math.sqrt((2 * h) / 9.8), 2);
+      return { id: nextQuestionId('qk'), topic, difficulty, title: 'Drop Time', question: `An object is dropped from rest from a height of ${h} m. How long until it hits the ground? (g = 9.8 m/s²)`, unit: 's', answer: t, tolerance: 0.12, hints: ['Use x = (1/2)gt².', 'Solve t = sqrt(2x/g).'], solution: `t = sqrt(2*${h}/9.8) = <span class="sol-val">${t} s</span>` };
+    }
+    if (difficulty === 'Hard') {
+      const v = randInt(16, 32), ang = randChoice([25, 30, 35, 40, 45]);
+      const r = roundTo((v * v * Math.sin((2 * ang) * Math.PI / 180)) / 9.8, 2);
+      return { id: nextQuestionId('qk'), topic, difficulty, title: 'Projectile Range', question: `A projectile is launched at ${v} m/s and ${ang}°. Ignore air resistance. What is horizontal range?`, unit: 'm', answer: r, tolerance: 0.8, hints: ['Use R = v²sin(2theta)/g.', `Use sin(${2 * ang}°).`], solution: `R = ${v}² sin(${2 * ang}°)/9.8 = <span class="sol-val">${r} m</span>` };
+    }
+    const d = randInt(60, 220), t = randInt(6, 18);
+    const v = roundTo((2 * d) / t, 2);
+    return { id: nextQuestionId('qk'), topic, difficulty, title: 'Two-Stage Motion', question: `A drone travels ${d} m and comes to rest exactly ${t} s after launch with constant acceleration from rest. What was its speed at t=${t / 2} s?`, unit: 'm/s', answer: v, tolerance: 0.3, hints: ['From rest with constant a: x = 1/2 a t².', 'Find a, then v at t/2.'], solution: `a = 2x/t² then v = a(t/2) = 2x/t = <span class="sol-val">${v} m/s</span>` };
+  }
+
+  if (topic === 'forces') {
+    if (difficulty === 'Easy') {
+      const m = randInt(4, 22), a = randInt(2, 8), f = m * a;
+      return { id: nextQuestionId('qf'), topic, difficulty, title: 'Net Force', question: `A ${m} kg object accelerates at ${a} m/s². What net force acts on it?`, unit: 'N', answer: f, tolerance: 1.2, hints: ['Use F = ma.', `Multiply ${m} by ${a}.`], solution: `F = ${m}*${a} = <span class="sol-val">${f} N</span>` };
+    }
+    if (difficulty === 'Medium') {
+      const m = randInt(8, 40), theta = randChoice([20, 25, 30, 35, 40]), f = roundTo(m * 9.8 * Math.sin(theta * Math.PI / 180), 2);
+      return { id: nextQuestionId('qf'), topic, difficulty, title: 'Incline Component', question: `A ${m} kg block sits on a frictionless ${theta}° incline. Find the component of gravity down the slope.`, unit: 'N', answer: f, tolerance: 2, hints: ['Use mg sin(theta).', 'g = 9.8 m/s².'], solution: `F_parallel = ${m}*9.8*sin(${theta}°) = <span class="sol-val">${f} N</span>` };
+    }
+    if (difficulty === 'Hard') {
+      const m1 = randInt(2, 8), m2 = randInt(m1 + 1, 12), a = roundTo(((m2 - m1) * 9.8) / (m1 + m2), 2);
+      return { id: nextQuestionId('qf'), topic, difficulty, title: 'Atwood Setup', question: `In an ideal Atwood machine, masses are ${m1} kg and ${m2} kg. What is system acceleration?`, unit: 'm/s²', answer: a, tolerance: 0.12, hints: ['a = (m2-m1)g/(m1+m2).', 'Keep numerator and denominator separate first.'], solution: `a = (${m2}-${m1})*9.8/(${m1}+${m2}) = <span class="sol-val">${a} m/s²</span>` };
+    }
+    const m = randInt(30, 70), mu = randChoice([0.2, 0.25, 0.3, 0.35]), f = roundTo(mu * m * 9.8, 2);
+    return { id: nextQuestionId('qf'), topic, difficulty, title: 'Friction Threshold', question: `A ${m} kg crate is on level ground with coefficient of static friction ${mu}. Minimum horizontal force to start motion?`, unit: 'N', answer: f, tolerance: 4, hints: ['Threshold is F = mu_s N.', 'On level ground, N = mg.'], solution: `F_min = ${mu}*${m}*9.8 = <span class="sol-val">${f} N</span>` };
+  }
+
+  if (topic === 'circular') {
+    if (difficulty === 'Easy') {
+      const v = randInt(3, 12), r = randChoice([0.5, 0.8, 1.0, 1.5, 2.0]), a = roundTo((v * v) / r, 2);
+      return { id: nextQuestionId('qc'), topic, difficulty, title: 'Centripetal Acceleration', question: `An object moves at ${v} m/s in a circle of radius ${r} m. Find centripetal acceleration.`, unit: 'm/s²', answer: a, tolerance: 0.4, hints: ['a_c = v²/r.', 'Square speed first.'], solution: `a_c = ${v}²/${r} = <span class="sol-val">${a} m/s²</span>` };
+    }
+    if (difficulty === 'Medium') {
+      const m = randChoice([1.5, 2.0, 2.5, 3.0]), v = randInt(4, 14), r = randInt(1, 4), f = roundTo((m * v * v) / r, 2);
+      return { id: nextQuestionId('qc'), topic, difficulty, title: 'Centripetal Force', question: `A ${m} kg mass moves at ${v} m/s in a radius-${r} m circle. What centripetal force is required?`, unit: 'N', answer: f, tolerance: 1.2, hints: ['F_c = mv²/r.', 'Multiply m by v² then divide by r.'], solution: `F_c = ${m}*${v}²/${r} = <span class="sol-val">${f} N</span>` };
+    }
+    if (difficulty === 'Hard') {
+      const M = randChoice([3.5, 4.0, 4.5, 5.0]) * 1e24, R = randChoice([4.8, 5.2, 5.6, 6.0]) * 1e6, g = roundTo((6.67e-11 * M) / (R * R), 2);
+      return { id: nextQuestionId('qc'), topic, difficulty, title: 'Surface Gravity', question: `A planet has mass ${(M / 1e24).toFixed(1)}×10^24 kg and radius ${(R / 1e6).toFixed(1)}×10^6 m. Estimate g at its surface.`, unit: 'm/s²', answer: g, tolerance: 0.4, hints: ['Use g = GM/r².', 'Track powers of ten carefully.'], solution: `g = (6.67e-11*M)/r² = <span class="sol-val">${g} m/s²</span>` };
+    }
+    const v = randInt(6200, 8300), r = randChoice([6.5, 6.8, 7.1, 7.4]) * 1e6, a = roundTo((v * v) / r, 3), pct = roundTo((a / 9.8) * 100, 2);
+    return { id: nextQuestionId('qc'), topic, difficulty, title: 'Orbit Curvature', question: `A satellite speed is ${v} m/s at orbital radius ${(r / 1e6).toFixed(1)}×10^6 m. What percent of g is its centripetal acceleration?`, unit: '%', answer: pct, tolerance: 1.2, hints: ['Find a_c = v²/r first.', 'Then compute (a_c/9.8)*100.'], solution: `a_c = ${a} m/s², so percent of g = <span class="sol-val">${pct}%</span>` };
+  }
+
+  if (topic === 'energy') {
+    if (difficulty === 'Easy') {
+      const f = randInt(15, 60), d = randInt(2, 12), w = f * d;
+      return { id: nextQuestionId('qe'), topic, difficulty, title: 'Work Done', question: `A constant ${f} N force pushes in the direction of motion for ${d} m. Work done?`, unit: 'J', answer: w, tolerance: 2, hints: ['W = Fd cos(theta).', 'theta = 0 degrees.'], solution: `W = ${f}*${d} = <span class="sol-val">${w} J</span>` };
+    }
+    if (difficulty === 'Medium') {
+      const k = randInt(180, 520), x = randChoice([0.12, 0.15, 0.18, 0.22, 0.25]), e = roundTo(0.5 * k * x * x, 3);
+      return { id: nextQuestionId('qe'), topic, difficulty, title: 'Spring Energy', question: `A spring (k = ${k} N/m) is compressed ${x} m. How much elastic potential energy is stored?`, unit: 'J', answer: e, tolerance: 0.15, hints: ['Use U = 1/2 kx².', 'Square the compression first.'], solution: `U = 0.5*${k}*${x}² = <span class="sol-val">${e} J</span>` };
+    }
+    if (difficulty === 'Hard') {
+      const m = randInt(2, 12), h = randInt(8, 35), v = roundTo(Math.sqrt(2 * 9.8 * h), 2);
+      return { id: nextQuestionId('qe'), topic, difficulty, title: 'Energy to Speed', question: `A ${m} kg object drops from ${h} m with no losses. What is its speed just before impact?`, unit: 'm/s', answer: v, tolerance: 0.2, hints: ['mgh = 1/2 mv².', 'Mass cancels.'], solution: `v = sqrt(2gh) = sqrt(2*9.8*${h}) = <span class="sol-val">${v} m/s</span>` };
+    }
+    const m = randInt(900, 1800), h = randInt(12, 35), t = randInt(8, 20), p = roundTo((m * 9.8 * h) / t, 2);
+    return { id: nextQuestionId('qe'), topic, difficulty, title: 'Power Requirement', question: `An elevator of mass ${m} kg rises ${h} m in ${t} s at constant speed. Minimum average power?`, unit: 'W', answer: p, tolerance: 350, hints: ['Power = Work/time.', 'Work against gravity = mgh.'], solution: `P = (${m}*9.8*${h})/${t} = <span class="sol-val">${p} W</span>` };
+  }
+
+  if (topic === 'momentum') {
+    if (difficulty === 'Easy') {
+      const f = randInt(20, 80), t = randChoice([0.2, 0.25, 0.3, 0.4, 0.5]), j = roundTo(f * t, 2);
+      return { id: nextQuestionId('qm'), topic, difficulty, title: 'Impulse', question: `A force of ${f} N acts for ${t} s. What impulse is delivered?`, unit: 'N·s', answer: j, tolerance: 0.5, hints: ['J = F delta t.', 'Multiply force and time.'], solution: `J = ${f}*${t} = <span class="sol-val">${j} N·s</span>` };
+    }
+    if (difficulty === 'Medium') {
+      const m1 = randInt(1, 4), v1 = randInt(3, 9), m2 = randInt(2, 6), vf = roundTo((m1 * v1) / (m1 + m2), 2);
+      return { id: nextQuestionId('qm'), topic, difficulty, title: 'Inelastic Collision', question: `${m1} kg mass at ${v1} m/s sticks to ${m2} kg mass at rest. Final speed?`, unit: 'm/s', answer: vf, tolerance: 0.08, hints: ['Momentum before = momentum after.', 'Use (m1 v1)/(m1+m2).'], solution: `v_f = (${m1}*${v1})/(${m1}+${m2}) = <span class="sol-val">${vf} m/s</span>` };
+    }
+    if (difficulty === 'Hard') {
+      const mb = randChoice([0.008, 0.01, 0.012]), vb = randInt(220, 380), mg = randChoice([1.8, 2.0, 2.2, 2.5]), vr = roundTo((mb * vb) / mg, 3);
+      return { id: nextQuestionId('qm'), topic, difficulty, title: 'Recoil Speed', question: `A ${mb} kg projectile leaves a ${mg} kg launcher at ${vb} m/s. Launcher recoil speed magnitude?`, unit: 'm/s', answer: vr, tolerance: 0.06, hints: ['Initial momentum is zero.', 'm_projectile v_projectile = m_launcher v_recoil.'], solution: `v_recoil = (${mb}*${vb})/${mg} = <span class="sol-val">${vr} m/s</span>` };
+    }
+    const m = randInt(700, 1500), vi = randInt(12, 25), vf = -randInt(1, 5), dt = randChoice([0.08, 0.1, 0.12, 0.15]);
+    const f = roundTo(Math.abs((m * (vf - vi)) / dt), 2);
+    return { id: nextQuestionId('qm'), topic, difficulty, title: 'Crash Force', question: `A ${m} kg test cart changes velocity from ${vi} m/s to ${vf} m/s in ${dt} s. Find average force magnitude.`, unit: 'N', answer: f, tolerance: 1200, hints: ['Use F_avg = Delta p / Delta t.', 'Delta p = m(vf-vi).'], solution: `|F| = |${m}(${vf}-${vi})|/${dt} = <span class="sol-val">${f} N</span>` };
+  }
+
+  if (topic === 'shm') {
+    if (difficulty === 'Easy') {
+      const freq = randChoice([1.5, 2.0, 2.5, 3.0]), period = roundTo(1 / freq, 3);
+      return { id: nextQuestionId('qs'), topic, difficulty, title: 'Period from Frequency', question: `An oscillator has frequency ${freq} Hz. What is its period?`, unit: 's', answer: period, tolerance: 0.03, hints: ['T = 1/f.', 'Invert the frequency.'], solution: `T = 1/${freq} = <span class="sol-val">${period} s</span>` };
+    }
+    if (difficulty === 'Medium') {
+      const A = randChoice([0.06, 0.08, 0.1, 0.12]), om = randChoice([4, 5, 6, 7]), amax = roundTo(om * om * A, 3);
+      return { id: nextQuestionId('qs'), topic, difficulty, title: 'Maximum Acceleration', question: `In SHM, amplitude is ${A} m and omega is ${om} rad/s. Maximum acceleration?`, unit: 'm/s²', answer: amax, tolerance: 0.1, hints: ['a_max = omega² A.', 'Square omega first.'], solution: `a_max = ${om}²*${A} = <span class="sol-val">${amax} m/s²</span>` };
+    }
+    if (difficulty === 'Hard') {
+      const A = randChoice([0.18, 0.2, 0.24]), x = randChoice([0.06, 0.08, 0.1, 0.12]), om = randChoice([4, 5, 6]), v = roundTo(om * Math.sqrt(A * A - x * x), 3);
+      return { id: nextQuestionId('qs'), topic, difficulty, title: 'Speed at Position', question: `For SHM with A=${A} m and omega=${om} rad/s, what is speed magnitude at x=${x} m?`, unit: 'm/s', answer: v, tolerance: 0.04, hints: ['Use v = omega*sqrt(A²-x²).', 'Compute inside sqrt first.'], solution: `v = ${om}*sqrt(${A}²-${x}²) = <span class="sol-val">${v} m/s</span>` };
+    }
+    const A = randChoice([0.2, 0.24, 0.28]), T = randChoice([1.2, 1.5, 1.8, 2.0]), om = roundTo((2 * Math.PI) / T, 3), vmax = roundTo(A * om, 3);
+    return { id: nextQuestionId('qs'), topic, difficulty, title: 'SHM Speed Scale', question: `An SHM oscillator has amplitude ${A} m and period ${T} s. What is its maximum speed?`, unit: 'm/s', answer: vmax, tolerance: 0.04, hints: ['First find omega = 2pi/T.', 'Then v_max = A omega.'], solution: `omega=${om} rad/s, so v_max = ${A}*omega = <span class="sol-val">${vmax} m/s</span>` };
+  }
+
+  if (difficulty === 'Easy') {
+    const f = randInt(10, 30), r = randChoice([0.2, 0.25, 0.3, 0.4]), tau = roundTo(f * r, 2);
+    return { id: nextQuestionId('qr'), topic, difficulty, title: 'Torque Basics', question: `A ${f} N force is applied perpendicular to a lever arm of ${r} m. Torque magnitude?`, unit: 'N·m', answer: tau, tolerance: 0.2, hints: ['For perpendicular force, tau = rF.', 'Multiply radius and force.'], solution: `tau = ${r}*${f} = <span class="sol-val">${tau} N·m</span>` };
+  }
+  if (difficulty === 'Medium') {
+    const tau = randInt(8, 24), I = randChoice([2, 3, 4, 5]), alpha = roundTo(tau / I, 3);
+    return { id: nextQuestionId('qr'), topic, difficulty, title: 'Angular Acceleration', question: `A rigid body has net torque ${tau} N·m and inertia ${I} kg·m². Find angular acceleration.`, unit: 'rad/s²', answer: alpha, tolerance: 0.08, hints: ['Use tau = I alpha.', 'alpha = tau/I.'], solution: `alpha = ${tau}/${I} = <span class="sol-val">${alpha} rad/s²</span>` };
+  }
+  if (difficulty === 'Hard') {
+    const I = randChoice([1.8, 2.2, 2.6, 3.0]), om = randInt(6, 14), k = roundTo(0.5 * I * om * om, 2);
+    return { id: nextQuestionId('qr'), topic, difficulty, title: 'Rotational Kinetic Energy', question: `A wheel has I=${I} kg·m² and angular speed ${om} rad/s. Rotational kinetic energy?`, unit: 'J', answer: k, tolerance: 1.5, hints: ['K = 1/2 I omega².', 'Square omega first.'], solution: `K = 0.5*${I}*${om}² = <span class="sol-val">${k} J</span>` };
+  }
+  const I = randChoice([2.2, 2.8, 3.4]), alpha = randChoice([2.5, 3.0, 3.5, 4.0]), tau = roundTo(I * alpha, 2), work = roundTo(tau * Math.PI, 2);
+  return { id: nextQuestionId('qr'), topic, difficulty, title: 'Torque Through Angle', question: `A constant torque spins a rotor with I=${I} kg·m² at alpha=${alpha} rad/s² through pi radians. What work is done by the torque?`, unit: 'J', answer: work, tolerance: 1.5, hints: ['For constant torque, W = tau theta.', 'tau = I alpha first.'], solution: `tau=${tau} N·m, so W=tau*pi = <span class="sol-val">${work} J</span>` };
+}
+
+function generateConceptQuestion(topic, difficulty) {
+  const pool = {
+    kinematics: [
+      { q: 'What does the slope of a position-time graph represent?', c: ['Displacement', 'Velocity', 'Acceleration', 'Net force'], a: 1, h: 'Slope of x-t gives rate of position change.', s: 'It represents <span class="sol-val">velocity</span>.' },
+      { q: 'If the area under a velocity-time graph is negative, what does that indicate?', c: ['Speed is increasing', 'Object moved in negative direction', 'Acceleration is zero', 'Force is positive'], a: 1, h: 'Area under v-t is displacement.', s: 'It means net displacement is in the <span class="sol-val">negative direction</span>.' }
+    ],
+    forces: [
+      { q: 'Two objects push on each other. Which statement matches Newton\'s third law?', c: ['Larger mass exerts larger force', 'Forces are equal and opposite on different objects', 'Forces cancel on one object', 'Only moving objects have pairs'], a: 1, h: 'The pair acts on different bodies.', s: 'Third-law forces are <span class="sol-val">equal/opposite on different objects</span>.' },
+      { q: 'If velocity is constant in a straight line, the net force must be:', c: ['Forward', 'Backward', 'Zero', 'Equal to weight'], a: 2, h: 'Constant velocity means zero acceleration.', s: 'Net force is <span class="sol-val">zero</span>.' }
+    ],
+    circular: [
+      { q: 'In uniform circular motion, acceleration direction is:', c: ['Tangential', 'Outward radial', 'Toward center', 'Zero'], a: 2, h: 'It changes direction of velocity.', s: 'It points <span class="sol-val">toward the center</span>.' },
+      { q: 'If speed increases in circular motion while radius stays fixed, centripetal force:', c: ['Decreases', 'Stays same', 'Increases', 'Becomes zero'], a: 2, h: 'F_c is proportional to v².', s: 'It <span class="sol-val">increases</span> with v².' }
+    ],
+    energy: [
+      { q: 'Mechanical energy decreases in a closed system when:', c: ['Only conservative forces act', 'Nonconservative work removes energy', 'Mass is constant', 'Velocity is nonzero'], a: 1, h: 'Think friction/thermal transfer.', s: 'It decreases when <span class="sol-val">nonconservative work</span> acts.' },
+      { q: 'Choosing a different system boundary in energy analysis changes:', c: ['Value of g', 'What counts as external transfer', 'Object mass', 'Time'], a: 1, h: 'Boundary defines inside/outside.', s: 'It changes <span class="sol-val">which energy transfers are external</span>.' }
+    ],
+    momentum: [
+      { q: 'In an isolated system, total momentum is conserved during collisions because:', c: ['Kinetic energy is always conserved', 'Net external impulse is approximately zero', 'Masses are equal', 'Velocity stays constant'], a: 1, h: 'Impulse changes momentum.', s: 'Conservation follows from <span class="sol-val">near-zero external impulse</span>.' },
+      { q: 'Perfectly inelastic collision means objects:', c: ['Bounce apart', 'Have equal masses', 'Stick together', 'Conserve kinetic energy'], a: 2, h: 'Definition-based question.', s: 'They <span class="sol-val">stick together</span>.' }
+    ],
+    shm: [
+      { q: 'At equilibrium in ideal SHM, speed is typically:', c: ['Maximum', 'Minimum', 'Zero always', 'Undefined'], a: 0, h: 'Energy is mostly kinetic at center.', s: 'Speed is <span class="sol-val">maximum</span> at equilibrium.' },
+      { q: 'For SHM, restoring force points:', c: ['Away from equilibrium', 'Toward equilibrium', 'In motion direction always', 'Always upward'], a: 1, h: 'Restoring brings system back.', s: 'It points <span class="sol-val">toward equilibrium</span>.' }
+    ],
+    rotation: [
+      { q: 'Increasing lever arm while keeping force and angle fixed changes torque by:', c: ['Decreasing it', 'No change', 'Increasing it', 'Making it zero'], a: 2, h: 'tau = rF sin(theta).', s: 'Torque <span class="sol-val">increases</span> with lever arm.' },
+      { q: 'Two disks have same mass, but one has mass farther from axis. It has:', c: ['Lower I', 'Same I', 'Higher I', 'Cannot determine'], a: 2, h: 'I depends on r² distribution.', s: 'It has <span class="sol-val">higher moment of inertia</span>.' }
+    ]
+  };
+  const item = randChoice(pool[topic] || pool.kinematics);
+  return {
+    id: nextQuestionId('c'),
+    topic,
+    difficulty,
+    kind: 'conceptual',
+    title: `${topicLabel(topic)} Concept Check`,
+    question: item.q,
+    choices: item.c,
+    answerIndex: item.a,
+    hints: [item.h, `Difficulty focus: ${difficulty}. Justify why the correct option best matches AP Physics 1 reasoning.`],
+    solution: item.s
+  };
+}
+
+function buildInfinitePracticeSet() {
+  const activeDiffs = DIFF_ORDER.filter(d => difficultyFilters[d]);
+  const topics = Object.keys(TOPIC_LABELS).filter(t => practiceFilter === 'all' || t === practiceFilter);
+  const quant = [];
+  const conceptual = [];
+  topics.forEach(topic => {
+    activeDiffs.forEach(diff => {
+      quant.push(generateQuantQuestion(topic, diff));
+      conceptual.push(generateConceptQuestion(topic, diff));
+    });
+  });
+  return { quant, conceptual };
+}
 
 function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -1217,8 +1430,25 @@ function renderArchiveList() {
 
 function filterPractice(filter, btn) {
   practiceFilter = filter;
-  document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.topic-pill').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  refreshInfiniteQuestions();
+}
+
+function toggleDifficulty(diff, btn) {
+  difficultyFilters[diff] = !difficultyFilters[diff];
+  const anySelected = DIFF_ORDER.some(d => difficultyFilters[d]);
+  if (!anySelected) {
+    difficultyFilters[diff] = true;
+  }
+  btn.classList.toggle('active', difficultyFilters[diff]);
+  refreshInfiniteQuestions();
+}
+
+function refreshInfiniteQuestions() {
+  const built = buildInfinitePracticeSet();
+  renderedPractice = built.quant;
+  renderedConceptual = built.conceptual;
   renderPracticeLists();
 }
 
@@ -1227,11 +1457,8 @@ function renderPracticeLists() {
   document.getElementById('concept-list').style.display = 'block';
   document.getElementById('practice-solve').classList.remove('active');
 
-  const filtered = PRACTICE.filter(p => practiceFilter === 'all' || p.topic === practiceFilter);
-  const quant = filtered.filter(p => p.kind !== 'conceptual');
-  const concept = filtered.filter(p => p.kind === 'conceptual');
-  document.getElementById('practice-list').innerHTML = renderGroupedPractice(quant);
-  document.getElementById('concept-list').innerHTML = renderGroupedPractice(concept);
+  document.getElementById('practice-list').innerHTML = renderGroupedPractice(renderedPractice);
+  document.getElementById('concept-list').innerHTML = renderGroupedPractice(renderedConceptual);
 }
 
 function renderGroupedPractice(items) {
@@ -1264,7 +1491,7 @@ function renderGroupedPractice(items) {
 }
 
 function openPractice(id) {
-  currentPractice = PRACTICE.find(p => p.id === id);
+  currentPractice = [...renderedPractice, ...renderedConceptual].find(p => p.id === id);
   pHintIndex = 0;
   selectedChoice = null;
   if (!currentPractice) return;
@@ -1406,7 +1633,7 @@ const tomorrowCase = getCaseForDate(tomorrow);
 renderHomeFromCases(todayCase, tomorrowCase);
 loadCaseById(todayCase.id);
 renderArchiveList();
-renderPracticeLists();
+refreshInfiniteQuestions();
 </script>
 </body>
 </html>
