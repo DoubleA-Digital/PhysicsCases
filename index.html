@@ -386,6 +386,15 @@ input { font-family: var(--mono); }
 .profile-name { font-size: 1.4rem; font-weight: 700; }
 .profile-sub { font-size: .85rem; color: var(--muted); margin-top: 2px; }
 .profile-controls { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+.profile-avatar-emoji { font-size: 2rem; line-height: 1; }
+.nav-avatar-emoji { font-size: 1.1rem; line-height: 1; }
+.cosmetics-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(170px,1fr)); gap: 12px; }
+.cosmetic-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+.cosmetic-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.cosmetic-icon { width: 34px; height: 34px; border-radius: 50%; background: var(--bg3); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+.cosmetic-name { font-size: .88rem; font-weight: 600; }
+.cosmetic-meta { font-size: .75rem; color: var(--muted); margin-bottom: 10px; }
+.cosmetic-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
 /* ── AUTH ── */
 #auth-screen {
@@ -642,7 +651,7 @@ input { font-family: var(--mono); }
             <div class="results-grid">
               <div class="result-cell"><div class="result-icon">⏱️</div><div class="result-val" id="res-time">—</div><div class="result-label">Time</div></div>
               <div class="result-cell"><div class="result-icon">🎯</div><div class="result-val" id="res-acc">—</div><div class="result-label">Accuracy</div></div>
-              <div class="result-cell"><div class="result-icon">🔥</div><div class="result-val" id="res-streak">—</div><div class="result-label">Streak</div></div>
+              <div class="result-cell"><div class="result-icon">💎</div><div class="result-val" id="res-streak">—</div><div class="result-label">Points</div></div>
             </div>
             <button class="btn btn-secondary btn-full" id="show-solution-btn" onclick="toggleSolution()">📚 View Full Solution</button>
 
@@ -872,9 +881,6 @@ input { font-family: var(--mono); }
         <div class="profile-name" id="profile-username">Your Progress</div>
         <div class="profile-sub" id="profile-sub-text">Physicist in training</div>
         <div class="profile-controls">
-          <input id="avatar-input" type="file" accept="image/*" style="display:none" onchange="updateAvatar(event)">
-          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('avatar-input').click()">Change Profile Picture</button>
-          <button class="btn btn-ghost btn-sm" onclick="removeAvatar()">Remove Picture</button>
           <button class="btn btn-danger btn-sm" onclick="signOut()">Sign Out</button>
         </div>
       </div>
@@ -886,6 +892,30 @@ input { font-family: var(--mono); }
       <div class="stat-card"><div class="stat-val" id="s-best">—</div><div class="stat-label">Best Time</div></div>
       <div class="stat-card"><div class="stat-val" id="s-avg">—</div><div class="stat-label">Avg Time</div></div>
       <div class="stat-card"><div class="stat-val" id="s-acc">—</div><div class="stat-label">Accuracy</div></div>
+      <div class="stat-card"><div class="stat-val" id="s-points">0</div><div class="stat-label">Total Points</div></div>
+    </div>
+
+    <p class="label" style="margin-bottom:16px">Avatar Cosmetics Shop</p>
+    <div class="card" style="margin-bottom:24px">
+      <p class="page-sub" style="margin-top:0;margin-bottom:14px;font-size:.85rem">Earn points by solving cases quickly and accurately. Spend points to unlock character avatars.</p>
+      <div class="cosmetics-grid" id="cosmetics-grid"></div>
+    </div>
+
+    <p class="label" style="margin-bottom:16px">Leaderboard: Daily Fastest Runs (All-Time)</p>
+    <div class="card" style="padding:0;overflow:hidden;margin-bottom:24px">
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Case</th>
+            <th>User</th>
+            <th>Fastest Time</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboard-body">
+          <tr><td colspan="4" style="text-align:center;padding:26px;color:var(--muted);font-style:italic">No leaderboard entries yet.</td></tr>
+        </tbody>
+      </table>
     </div>
 
     <p class="label" style="margin-bottom:16px">Attempt History</p>
@@ -1046,7 +1076,8 @@ let practiceDifficulty = 'all';
 
 const AUTH_ACCOUNTS_KEY = 'viq_accounts';
 const AUTH_SESSION_KEY = 'viq_session';
-const profileFallback = '{"solved":0,"streak":0,"times":[],"accuracies":[],"history":[]}';
+const LEADERBOARD_KEY = 'viq_leaderboard';
+const profileFallback = '{"solved":0,"streak":0,"points":0,"times":[],"accuracies":[],"history":[]}';
 let currentUser = null;
 let profile = JSON.parse(profileFallback);
 
@@ -1068,12 +1099,40 @@ function nextQuestionId(prefix) {
   return `${prefix}-${Date.now()}-${generatedCounter}`;
 }
 
+const COSMETICS = [
+  { id: 'monkey', name: 'Monkey', icon: '🐵', cost: 0 },
+  { id: 'lion', name: 'Lion', icon: '🦁', cost: 180 },
+  { id: 'dog', name: 'Dog', icon: '🐶', cost: 160 },
+  { id: 'cat', name: 'Cat', icon: '🐱', cost: 150 },
+  { id: 'fox', name: 'Fox', icon: '🦊', cost: 220 },
+  { id: 'bear', name: 'Bear', icon: '🐻', cost: 240 },
+  { id: 'owl', name: 'Owl', icon: '🦉', cost: 260 },
+  { id: 'dragon', name: 'Dragon', icon: '🐉', cost: 480 },
+  { id: 'skeleton', name: 'Skeleton', icon: '💀', cost: 420 },
+  { id: 'ghost', name: 'Ghost', icon: '👻', cost: 350 }
+];
+
+function getCosmeticById(id) {
+  return COSMETICS.find(c => c.id === id) || COSMETICS[0];
+}
+
 function safeEmail(email) {
   return String(email || '').trim().toLowerCase();
 }
 
 function getAccounts() {
-  return JSON.parse(localStorage.getItem(AUTH_ACCOUNTS_KEY) || '[]');
+  const accounts = JSON.parse(localStorage.getItem(AUTH_ACCOUNTS_KEY) || '[]');
+  return accounts.map(a => {
+    const starter = a.activeCosmetic || a.equippedCosmetic || 'monkey';
+    const owned = Array.isArray(a.ownedCosmetics) && a.ownedCosmetics.length > 0 ? a.ownedCosmetics : [starter];
+    return {
+      username: a.username || 'Physicist',
+      email: safeEmail(a.email),
+      password: a.password || '',
+      ownedCosmetics: [...new Set(owned)],
+      equippedCosmetic: a.equippedCosmetic || starter
+    };
+  });
 }
 
 function saveAccounts(accounts) {
@@ -1092,6 +1151,7 @@ function saveProfile() {
 function loadProfileForCurrentUser() {
   if (!currentUser) return;
   profile = JSON.parse(localStorage.getItem(profileKeyFor(currentUser.email)) || profileFallback);
+  if (typeof profile.points !== 'number') profile.points = 0;
 }
 
 function saveSession() {
@@ -1104,7 +1164,7 @@ function restoreSession() {
   if (!session || !session.email) return false;
   const user = getAccounts().find(a => safeEmail(a.email) === safeEmail(session.email));
   if (!user) return false;
-  currentUser = { email: safeEmail(user.email), username: user.username, avatar: user.avatar || '' };
+  currentUser = { email: safeEmail(user.email), username: user.username, ownedCosmetics: user.ownedCosmetics, equippedCosmetic: user.equippedCosmetic };
   loadProfileForCurrentUser();
   return true;
 }
@@ -1114,12 +1174,13 @@ function renderUserIdentity() {
   const profileAvatar = document.getElementById('profile-avatar');
   const username = (currentUser && currentUser.username) ? currentUser.username : 'Physicist';
   const initials = username.charAt(0).toUpperCase() || 'P';
+  const cosmetic = currentUser ? getCosmeticById(currentUser.equippedCosmetic) : null;
   setText('profile-username', `${username}'s Progress`);
   setText('profile-sub-text', currentUser ? `Signed in as ${currentUser.email}` : 'Physicist in training');
   if (!nav || !profileAvatar) return;
-  if (currentUser && currentUser.avatar) {
-    nav.innerHTML = `<img src="${currentUser.avatar}" alt="Avatar" class="nav-avatar-img">`;
-    profileAvatar.innerHTML = `<img src="${currentUser.avatar}" alt="Profile avatar">`;
+  if (currentUser && cosmetic) {
+    nav.innerHTML = `<span class="nav-avatar-emoji">${cosmetic.icon}</span>`;
+    profileAvatar.innerHTML = `<span class="profile-avatar-emoji">${cosmetic.icon}</span>`;
   } else {
     nav.textContent = initials;
     profileAvatar.textContent = initials;
@@ -1141,6 +1202,7 @@ function enterApp() {
   renderUserIdentity();
   refreshInfiniteQuestions();
   renderArchiveList();
+  renderLeaderboard();
 }
 
 function showAuthScreen() {
@@ -1157,9 +1219,10 @@ function createAccount() {
   if (password.length < 6) { showToast('Password must be at least 6 characters'); return; }
   const accounts = getAccounts();
   if (accounts.some(a => safeEmail(a.email) === email)) { showToast('Account already exists for this email'); return; }
-  accounts.push({ username, email, password, avatar: '' });
+  const starter = getCosmeticById(randChoice(['monkey', 'dog', 'cat'])).id;
+  accounts.push({ username, email, password, ownedCosmetics: [starter], equippedCosmetic: starter });
   saveAccounts(accounts);
-  currentUser = { username, email, avatar: '' };
+  currentUser = { username, email, ownedCosmetics: [starter], equippedCosmetic: starter };
   saveSession();
   loadProfileForCurrentUser();
   renderUserIdentity();
@@ -1172,7 +1235,7 @@ function signIn() {
   const password = String(document.getElementById('signin-password').value || '');
   const account = getAccounts().find(a => safeEmail(a.email) === email && a.password === password);
   if (!account) { showToast('Invalid email or password'); return; }
-  currentUser = { username: account.username, email: safeEmail(account.email), avatar: account.avatar || '' };
+  currentUser = { username: account.username, email: safeEmail(account.email), ownedCosmetics: account.ownedCosmetics, equippedCosmetic: account.equippedCosmetic };
   saveSession();
   loadProfileForCurrentUser();
   renderUserIdentity();
@@ -1187,36 +1250,98 @@ function signOut() {
   showAuthScreen();
 }
 
-function updateAvatar(event) {
-  const file = event.target.files && event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    const dataUrl = String(reader.result || '');
-    const accounts = getAccounts();
-    const idx = accounts.findIndex(a => safeEmail(a.email) === safeEmail(currentUser.email));
-    if (idx >= 0) {
-      accounts[idx].avatar = dataUrl;
-      saveAccounts(accounts);
-      currentUser.avatar = dataUrl;
-      renderUserIdentity();
-      showToast('Profile picture updated');
-    }
-  };
-  reader.readAsDataURL(file);
-}
-
-function removeAvatar() {
+function updateCurrentAccount(partial) {
   if (!currentUser) return;
   const accounts = getAccounts();
   const idx = accounts.findIndex(a => safeEmail(a.email) === safeEmail(currentUser.email));
-  if (idx >= 0) {
-    accounts[idx].avatar = '';
-    saveAccounts(accounts);
-    currentUser.avatar = '';
-    renderUserIdentity();
-    showToast('Profile picture removed');
+  if (idx < 0) return;
+  accounts[idx] = { ...accounts[idx], ...partial };
+  saveAccounts(accounts);
+  currentUser = { ...currentUser, ...partial };
+  renderUserIdentity();
+}
+
+function getLeaderboard() {
+  return JSON.parse(localStorage.getItem(LEADERBOARD_KEY) || '[]');
+}
+
+function saveLeaderboard(entries) {
+  localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(entries));
+}
+
+function buyCosmetic(id) {
+  if (!currentUser) return;
+  const item = getCosmeticById(id);
+  const owned = currentUser.ownedCosmetics || [];
+  if (owned.includes(id)) { showToast('Already unlocked'); return; }
+  if ((profile.points || 0) < item.cost) { showToast('Not enough points'); return; }
+  profile.points -= item.cost;
+  saveProfile();
+  const updatedOwned = [...owned, id];
+  updateCurrentAccount({ ownedCosmetics: updatedOwned });
+  renderCosmeticsShop();
+  updateProfilePage();
+  showToast(`${item.name} unlocked`);
+}
+
+function equipCosmetic(id) {
+  if (!currentUser) return;
+  const owned = currentUser.ownedCosmetics || [];
+  if (!owned.includes(id)) { showToast('Unlock this cosmetic first'); return; }
+  updateCurrentAccount({ equippedCosmetic: id });
+  renderCosmeticsShop();
+  showToast(`${getCosmeticById(id).name} equipped`);
+}
+
+function renderCosmeticsShop() {
+  const grid = document.getElementById('cosmetics-grid');
+  if (!grid || !currentUser) return;
+  const owned = currentUser.ownedCosmetics || [];
+  const equipped = currentUser.equippedCosmetic;
+  grid.innerHTML = COSMETICS.map(c => {
+    const isOwned = owned.includes(c.id);
+    const isEquipped = equipped === c.id;
+    const action = isEquipped
+      ? `<button class="btn btn-success btn-sm" disabled>Equipped</button>`
+      : isOwned
+        ? `<button class="btn btn-secondary btn-sm" onclick="equipCosmetic('${c.id}')">Equip</button>`
+        : `<button class="btn btn-primary btn-sm" onclick="buyCosmetic('${c.id}')">Unlock (${c.cost})</button>`;
+    return `<div class="cosmetic-card">
+      <div class="cosmetic-top"><div class="cosmetic-icon">${c.icon}</div><div class="cosmetic-name">${c.name}</div></div>
+      <div class="cosmetic-meta">${isOwned ? 'Owned' : `${c.cost} points`}</div>
+      <div class="cosmetic-actions">${action}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderLeaderboard() {
+  const body = document.getElementById('leaderboard-body');
+  if (!body) return;
+  const entries = getLeaderboard();
+  if (entries.length === 0) {
+    body.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:26px;color:var(--muted);font-style:italic">No leaderboard entries yet.</td></tr>';
+    return;
   }
+  const bestPerCasePerDay = {};
+  entries.forEach(e => {
+    const key = `${e.date}|${e.caseId}`;
+    if (!bestPerCasePerDay[key] || e.timeSec < bestPerCasePerDay[key].timeSec) {
+      bestPerCasePerDay[key] = e;
+    }
+  });
+  const rows = Object.values(bestPerCasePerDay)
+    .sort((a, b) => (a.date === b.date ? a.timeSec - b.timeSec : b.date.localeCompare(a.date)))
+    .slice(0, 100)
+    .map(e => {
+      const caseObj = CASE_BANK.find(c => c.id === e.caseId);
+      return `<tr>
+        <td style="color:var(--muted)">${e.date}</td>
+        <td>${caseObj ? caseObj.title : e.caseId}</td>
+        <td>${e.username}</td>
+        <td class="td-mono">${formatTime(e.timeSec)}</td>
+      </tr>`;
+    }).join('');
+  body.innerHTML = rows;
 }
 
 function generateQuantQuestion(topic, difficulty) {
@@ -1727,9 +1852,15 @@ function completeCase() {
   const score = Math.max(0, 3 - Math.min(totalWrong, 3));
   const accuracy = `${score}/3`;
   const timeStr = formatTime(timerSeconds);
+  const diffMult = { Easy: 1, Medium: 1.2, Hard: 1.45, 'Very Hard': 1.8 }[currentCase.difficulty] || 1.2;
+  const basePoints = 120;
+  const accuracyPoints = score * 55;
+  const speedPoints = Math.max(0, 240 - timerSeconds);
+  const earnedPoints = Math.max(40, Math.round((basePoints + accuracyPoints + speedPoints) * diffMult));
 
   profile.solved++;
   profile.streak++;
+  profile.points = (profile.points || 0) + earnedPoints;
   profile.times.push(timerSeconds);
   profile.accuracies.push(score);
   profile.history.unshift({
@@ -1743,12 +1874,23 @@ function completeCase() {
 
   setText('res-time', timeStr);
   setText('res-acc', accuracy);
-  setText('res-streak', profile.streak);
+  setText('res-streak', `+${earnedPoints}`);
   document.getElementById('completion-card').style.display = 'block';
   document.getElementById('steps-sidebar').style.display = 'none';
   document.getElementById('completion-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const lb = getLeaderboard();
+  lb.push({
+    caseId: currentCase.id,
+    username: currentUser ? currentUser.username : 'Guest',
+    email: currentUser ? currentUser.email : 'guest',
+    timeSec: timerSeconds,
+    date: new Date().toLocaleDateString('en-CA')
+  });
+  saveLeaderboard(lb);
+  renderLeaderboard();
+  renderCosmeticsShop();
   renderArchiveList();
-  showToast('Case complete!');
+  showToast(`Case complete! +${earnedPoints} points`);
 }
 
 function toggleSolution() {
@@ -1955,6 +2097,7 @@ function updateProfilePage() {
   renderUserIdentity();
   setText('s-solved', String(profile.solved));
   setText('s-streak', String(profile.streak));
+  setText('s-points', String(profile.points || 0));
   if (profile.times.length > 0) {
     const best = Math.min(...profile.times);
     const avg = Math.round(profile.times.reduce((a, b) => a + b, 0) / profile.times.length);
@@ -1977,6 +2120,8 @@ function updateProfilePage() {
         <td style="color:var(--muted);font-size:.82rem">${h.date}</td>
       </tr>`).join('');
   }
+  renderCosmeticsShop();
+  renderLeaderboard();
 }
 
 let toastTimer;
